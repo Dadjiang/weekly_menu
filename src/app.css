@@ -11,23 +11,23 @@ page {
 :root,
 page,
 root-portal {
-  --background: lab(100% 0 0);
-  --foreground: lab(2.75381% 0 0);
-  --card: lab(100% 0 0);
+  --background: #FFFBF5;
+  --foreground: #2B1D16;
+  --card: #FFF8EE;
   --card-foreground: lab(2.75381% 0 0);
   --popover: lab(100% 0 0);
   --popover-foreground: lab(2.75381% 0 0);
-  --primary: lab(7.78201% -0.0000149012 0);
-  --primary-foreground: lab(98.26% 0 0);
-  --secondary: lab(96.52% -0.0000298023 0.0000119209);
+  --primary: #C87941;
+  --primary-foreground: #ffffff;
+  --secondary: #7A8B4B;
   --secondary-foreground: lab(7.78201% -0.0000149012 0);
-  --muted: lab(96.52% -0.0000298023 0.0000119209);
-  --muted-foreground: lab(48.496% 0 0);
-  --accent: lab(96.52% -0.0000298023 0.0000119209);
+  --muted: #FFF2D8;
+  --muted-foreground: #8B7355;
+  --accent: #D94B3D;
   --accent-foreground: lab(7.78201% -0.0000149012 0);
-  --destructive: lab(48.4493% 77.4328 61.5452);
+  --destructive: #D94B3D;
   --destructive-foreground: lab(96.4152% 3.22586 1.14673);
-  --border: lab(90.952% 0 -0.0000119209);
+  --border: rgba(43, 29, 22, 0.15);
   --input: lab(90.952% 0 -0.0000119209);
   --ring: lab(66.128% -0.0000298023 0.0000119209);
   --sidebar: lab(98.26% 0 0);
@@ -44,6 +44,15 @@ root-portal {
   --code-number: lab(48.96% 0 0);
   --selection: lab(2.75381% 0 0);
   --selection-foreground: lab(100% 0 0);
+  --primary-container: #F5DFC8;
+  --accent-container: #FDDED9;
+  --secondary-container: #E2E8D0;
+  --surface-container-lowest: #FFFFFF;
+  --surface-container-high: #F5E6D0;
+  --surface-container-highest: #EBDAC4;
+  --success: #7A8B4B;
+  --warning: #E8A33D;
+  --outline-variant: rgba(43, 29, 22, 0.08);
   --tw-shadow: 0 0 #0000;
   --tw-shadow-color: initial;
   --tw-shadow-alpha: 100%;
@@ -136,6 +145,33 @@ root-portal {
   --color-selection-foreground: var(--selection-foreground);
   --color-code: var(--code);
   --radius-full: 9999px;
+  --color-primary-container: var(--primary-container);
+  --color-on-primary: var(--primary-foreground);
+  --color-accent-container: var(--accent-container);
+  --color-secondary-container: var(--secondary-container);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface: var(--card);
+  --color-surface-container: var(--muted);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--foreground);
+  --color-on-surface-variant: var(--muted-foreground);
+  --color-success: var(--success);
+  --color-error: var(--destructive);
+  --color-warning: var(--warning);
+  --color-outline: var(--border);
+  --color-outline-variant: var(--outline-variant);
+  --shadow-card: 0 4px 12px rgba(43, 29, 22, 0.10);
+  --shadow-float: 0 10px 25px rgba(43, 29, 22, 0.10);
+  --shadow-dialog: 0 25px 50px rgba(43, 29, 22, 0.18);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --font-serif: "Playfair Display", "Noto Serif SC", serif;
+  --font-sans: system-ui, "Noto Sans SC", sans-serif;
+
 }
 
 page,
