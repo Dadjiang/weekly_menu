@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+  <!-- 字体 -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色（焦糖暖调） === */
+      --color-primary:              #C87941;
+      --color-primary-container:    #F5DFC8;
+      --color-on-primary:           #ffffff;
+      /* === 强调色 === */
+      --color-accent:               #D94B3D;
+      --color-accent-container:     #FDDED9;
+      /* === 辅助色 === */
+      --color-secondary:            #7A8B4B;
+      --color-secondary-container:  #E2E8D0;
+      /* === 背景 / 表面（温暖中性色调） === */
+      --color-background:                 #FFFBF5;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFF8EE;
+      --color-surface-container:          #FFF2D8;
+      --color-surface-container-high:     #F5E6D0;
+      --color-surface-container-highest:  #EBDAC4;
+      /* === 文字 === */
+      --color-on-surface:           #2B1D16;
+      --color-on-surface-variant:   #8B7355;
+      /* === 功能色 === */
+      --color-success:  #7A8B4B;
+      --color-error:    #D94B3D;
+      --color-warning:  #E8A33D;
+      /* === 边框 === */
+      --color-outline:          rgba(43, 29, 22, 0.15);
+      --color-outline-variant:  rgba(43, 29, 22, 0.08);
+      /* === 圆角（温暖圆润） === */
+      --radius-sm:   0.375rem;
+      --radius-md:   0.5rem;
+      --radius-lg:   0.75rem;
+      --radius-xl:   1rem;
+      --radius-2xl:  1.25rem;
+      --radius-full: 9999px;
+      /* === 阴影（温暖柔和） === */
+      --shadow-card:   0 4px 12px rgba(43, 29, 22, 0.10);
+      --shadow-float:  0 10px 25px rgba(43, 29, 22, 0.10);
+      --shadow-dialog: 0 25px 50px rgba(43, 29, 22, 0.18);
+      /* === 字体 === */
+      --font-serif: "Playfair Display", "Noto Serif SC", serif;
+      --font-sans: system-ui, "Noto Sans SC", sans-serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, "Noto Sans SC", sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段（从 @nav:start 到 @nav:end） -->
+  <!-- 顶部 Header -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <h1 class="text-lg font-bold text-on-surface font-serif">每周菜谱</h1>
+    <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full
+                   hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="bell" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <!-- 底部 TabBar -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest
+              flex justify-around items-center h-14 border-t border-outline-variant/10 pb-[env(safe-area-inset-bottom)]">
+    <a href="home.html" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant
+                               hover:text-on-surface transition-colors">
+      <i data-lucide="chef-hat" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">首页</span>
+    </a>
+    <a href="generate.html" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant
+                                   hover:text-on-surface transition-colors">
+      <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">智能生成</span>
+    </a>
+    <a href="library.html" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant
+                                  hover:text-on-surface transition-colors">
+      <i data-lucide="book-open" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">菜谱库</span>
+    </a>
+    <a href="profile.html" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-primary"
+       aria-current="page">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">我的</span>
+    </a>
+  </nav>
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <main class="overflow-y-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+    <!-- @main-content:start -->
+
+    <!-- 用户信息卡片 -->
+    <div class="bg-surface rounded-xl shadow-card mx-4 mt-4 p-5">
+      <div class="flex items-center gap-4">
+        <!-- 头像 -->
+        <div class="w-16 h-16 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+          <span class="text-2xl font-bold text-on-primary font-serif">初</span>
+        </div>
+        <!-- 用户信息 -->
+        <div class="flex-1 min-w-0">
+          <h2 class="text-lg font-bold text-on-surface">小初</h2>
+          <p class="text-sm text-on-surface-variant mt-1">热爱美食的生活家</p>
+        </div>
+        <!-- 编辑按钮 -->
+        <button id="btn-edit-profile" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full
+                                             hover:bg-surface-container active:bg-surface-container-high transition-colors">
+          <i data-lucide="pencil" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 数据统计栏 -->
+    <div class="bg-surface rounded-xl shadow-card mx-4 mt-4 p-4">
+      <div class="flex items-center justify-around">
+        <!-- 统计项-我的菜谱 -->
+        <div id="stat-recipes" class="flex flex-col items-center gap-1 cursor-pointer">
+          <span class="text-xl font-bold text-primary">28</span>
+          <span class="text-xs text-on-surface-variant">我的菜谱</span>
+        </div>
+        <!-- 分隔线 -->
+        <div class="w-px h-8 bg-outline-variant/30"></div>
+        <!-- 统计项-收藏菜谱 -->
+        <div id="stat-favorites" class="flex flex-col items-center gap-1 cursor-pointer">
+          <span class="text-xl font-bold text-primary">56</span>
+          <span class="text-xs text-on-surface-variant">收藏菜谱</span>
+        </div>
+        <!-- 分隔线 -->
+        <div class="w-px h-8 bg-outline-variant/30"></div>
+        <!-- 统计项-获赞 -->
+        <div id="stat-likes" class="flex flex-col items-center gap-1 cursor-pointer">
+          <span class="text-xl font-bold text-primary">128</span>
+          <span class="text-xs text-on-surface-variant">获赞</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 功能菜单列表 -->
+    <div class="bg-surface rounded-xl shadow-card mx-4 mt-4 overflow-hidden">
+      <!-- 菜单项-我的菜谱 -->
+      <div id="menu-my-recipes" class="flex items-center px-4 py-3.5 hover:bg-surface-container active:bg-surface-container transition-colors cursor-pointer">
+        <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="book-open" class="w-4.5 h-4.5 text-primary"></i>
+        </div>
+        <span class="flex-1 text-sm font-medium text-on-surface ml-3">我的菜谱</span>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/50"></i>
+      </div>
+
+      <!-- 分割线 -->
+      <div class="mx-4 border-t border-outline-variant/10"></div>
+
+      <!-- 菜单项-我赞过的 -->
+      <div id="menu-liked" class="flex items-center px-4 py-3.5 hover:bg-surface-container active:bg-surface-container transition-colors cursor-pointer">
+        <div class="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="heart" class="w-4.5 h-4.5 text-accent"></i>
+        </div>
+        <span class="flex-1 text-sm font-medium text-on-surface ml-3">我赞过的</span>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/50"></i>
+      </div>
+
+      <!-- 分割线 -->
+      <div class="mx-4 border-t border-outline-variant/10"></div>
+
+      <!-- 菜单项-每周菜谱计划 -->
+      <div id="menu-weekly-plan" class="flex items-center px-4 py-3.5 hover:bg-surface-container active:bg-surface-container transition-colors cursor-pointer">
+        <div class="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="calendar-days" class="w-4.5 h-4.5 text-secondary"></i>
+        </div>
+        <span class="flex-1 text-sm font-medium text-on-surface ml-3">每周菜谱计划</span>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/50"></i>
+      </div>
+
+      <!-- 分割线 -->
+      <div class="mx-4 border-t border-outline-variant/10"></div>
+
+      <!-- 菜单项-分享设置 -->
+      <div id="menu-share" class="flex items-center px-4 py-3.5 hover:bg-surface-container active:bg-surface-container transition-colors cursor-pointer">
+        <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="share-2" class="w-4.5 h-4.5 text-primary"></i>
+        </div>
+        <span class="flex-1 text-sm font-medium text-on-surface ml-3">分享设置</span>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/50"></i>
+      </div>
+
+      <!-- 分割线 -->
+      <div class="mx-4 border-t border-outline-variant/10"></div>
+
+      <!-- 菜单项-关于我们 -->
+      <div id="menu-about" class="flex items-center px-4 py-3.5 hover:bg-surface-container active:bg-surface-container transition-colors cursor-pointer">
+        <div class="w-9 h-9 rounded-lg bg-on-surface-variant/10 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="info" class="w-4.5 h-4.5 text-on-surface-variant"></i>
+        </div>
+        <span class="flex-1 text-sm font-medium text-on-surface ml-3">关于我们</span>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/50"></i>
+      </div>
+    </div>
+
+    <!-- 退出登录按钮 -->
+    <div class="mx-4 mt-6 mb-6">
+      <button id="btn-logout" class="w-full bg-surface-container text-on-surface-variant border-none py-3.5 rounded-xl text-base font-semibold
+                                     hover:bg-surface-container-high active:scale-[0.98] transition-all">
+        退出登录
+      </button>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <script>
+    function navPush(route) {
+      console.log('[原型演示] PUSH 到: ' + route);
+      window.location.href = route;
+    }
+
+    function navReplace(route) {
+      console.log('[原型演示] REPLACE 为: ' + route);
+      window.location.replace(route);
+    }
+
+    function navReset(route) {
+      console.log('[原型演示] RESET 到: ' + route);
+      window.location.href = route;
+    }
+
+    function navBack() {
+      console.log('[原型演示] BACK 返回上一页');
+      if (window.history.length > 1) window.history.back();
+    }
+
+    $(function() {
+      // TabBar 导航
+      $('#nav-home').on('click', function(e) {
+        e.preventDefault();
+        navReset('home.html');
+      });
+
+      // 统计项点击
+      $('#stat-recipes').on('click', function() {
+        navPush('library.html');
+      });
+
+      $('#stat-favorites').on('click', function() {
+        console.log('[原型演示] 跳转到收藏菜谱列表');
+      });
+
+      $('#stat-likes').on('click', function() {
+        console.log('[原型演示] 跳转到获赞列表');
+      });
+
+      // 菜单项点击
+      $('#menu-my-recipes').on('click', function() {
+        navPush('library.html');
+      });
+
+      $('#menu-liked').on('click', function() {
+        console.log('[原型演示] 跳转到我赞过的列表');
+      });
+
+      $('#menu-weekly-plan').on('click', function() {
+        navPush('weekly-plan.html');
+      });
+
+      $('#menu-share').on('click', function() {
+        console.log('[原型演示] 打开分享设置');
+      });
+
+      $('#menu-about').on('click', function() {
+        console.log('[原型演示] 跳转到关于我们页面');
+      });
+
+      // 编辑资料按钮
+      $('#btn-edit-profile').on('click', function() {
+        console.log('[原型演示] 打开编辑资料弹窗');
+      });
+
+      // 退出登录
+      $('#btn-logout').on('click', function() {
+        console.log('[原型演示] 退出登录，跳转到登录页');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+  <!-- 字体 -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色（焦糖暖调） === */
+      --color-primary:              #C87941;
+      --color-primary-container:    #F5DFC8;
+      --color-on-primary:           #ffffff;
+      /* === 强调色 === */
+      --color-accent:               #D94B3D;
+      --color-accent-container:     #FDDED9;
+      /* === 辅助色 === */
+      --color-secondary:            #7A8B4B;
+      --color-secondary-container:  #E2E8D0;
+      /* === 背景 / 表面（温暖中性色调） === */
+      --color-background:                 #FFFBF5;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFF8EE;
+      --color-surface-container:          #FFF2D8;
+      --color-surface-container-high:     #F5E6D0;
+      --color-surface-container-highest:  #EBDAC4;
+      /* === 文字 === */
+      --color-on-surface:           #2B1D16;
+      --color-on-surface-variant:   #8B7355;
+      /* === 功能色 === */
+      --color-success:  #7A8B4B;
+      --color-error:    #D94B3D;
+      --color-warning:  #E8A33D;
+      /* === 边框 === */
+      --color-outline:          rgba(43, 29, 22, 0.15);
+      --color-outline-variant:  rgba(43, 29, 22, 0.08);
+      /* === 圆角（温暖圆润） === */
+      --radius-sm:   0.375rem;
+      --radius-md:   0.5rem;
+      --radius-lg:   0.75rem;
+      --radius-xl:   1rem;
+      --radius-2xl:  1.25rem;
+      --radius-full: 9999px;
+      /* === 阴影（温暖柔和） === */
+      --shadow-card:   0 4px 12px rgba(43, 29, 22, 0.10);
+      --shadow-float:  0 10px 25px rgba(43, 29, 22, 0.10);
+      --shadow-dialog: 0 25px 50px rgba(43, 29, 22, 0.18);
+      /* === 字体 === */
+      --font-serif: "Playfair Display", "Noto Serif SC", serif;
+      --font-sans: system-ui, "Noto Sans SC", sans-serif;
+    }
+  </style>
+
+  <style>
+    body {
+      min-height: max(812px, 100dvh);
+      font-family: system-ui, "Noto Sans SC", sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段（从 @nav:start 到 @nav:end） -->
+  <!-- 顶部 Header -->
+  <header class="bg-background sticky top-0 z-40 h-14 flex items-center justify-between px-4">
+    <h1 class="text-lg font-bold text-on-surface font-serif">每周菜谱</h1>
+    <button id="btn-notification" class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full
+                   hover:bg-surface-container active:bg-surface-container-high transition-colors">
+      <i data-lucide="bell" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <!-- 底部 TabBar -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest
+              flex justify-around items-center h-14 border-t border-outline-variant/10 pb-[env(safe-area-inset-bottom)]">
+    <a href="home.html" id="nav-home" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-primary"
+       aria-current="page">
+      <i data-lucide="chef-hat" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">首页</span>
+    </a>
+    <a href="generate.html" id="nav-generate" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant
+                                   hover:text-on-surface transition-colors">
+      <i data-lucide="sparkles" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">智能生成</span>
+    </a>
+    <a href="library.html" id="nav-library" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant
+                                  hover:text-on-surface transition-colors">
+      <i data-lucide="book-open" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">菜谱库</span>
+    </a>
+    <a href="profile.html" id="nav-profile" class="flex flex-col items-center gap-0.5 px-5 py-1.5 text-on-surface-variant
+                                  hover:text-on-surface transition-colors">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[10px] font-bold tracking-wide">我的</span>
+    </a>
+  </nav>
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <main class="overflow-y-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+    <!-- @main-content:start -->
+
+    <!-- 顶部问候区域 -->
+    <section class="px-4 pt-5 pb-2">
+      <p class="text-xs text-on-surface-variant">2025年1月15日 · 星期三</p>
+      <h2 class="text-xl font-bold text-on-surface mt-1 font-serif">今天吃什么？</h2>
+    </section>
+
+    <!-- 快速入口区 -->
+    <section class="px-4 pt-4 pb-2">
+      <div class="flex justify-around items-center">
+        <!-- 快速入口-智能生成 -->
+        <a href="generate.html" id="entry-generate" class="flex flex-col items-center gap-2 min-w-[64px]">
+          <div class="w-14 h-14 rounded-full bg-primary/12 flex items-center justify-center">
+            <i data-lucide="sparkles" class="w-6 h-6 text-primary"></i>
+          </div>
+          <span class="text-xs font-medium text-on-surface">智能生成</span>
+        </a>
+        <!-- 快速入口-每周菜谱 -->
+        <a href="weekly-plan.html" id="entry-weekly" class="flex flex-col items-center gap-2 min-w-[64px]">
+          <div class="w-14 h-14 rounded-full bg-secondary/12 flex items-center justify-center">
+            <i data-lucide="calendar-days" class="w-6 h-6 text-secondary"></i>
+          </div>
+          <span class="text-xs font-medium text-on-surface">每周菜谱</span>
+        </a>
+        <!-- 快速入口-菜谱库 -->
+        <a href="library.html" id="entry-library" class="flex flex-col items-center gap-2 min-w-[64px]">
+          <div class="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center">
+            <i data-lucide="book-open" class="w-6 h-6 text-accent"></i>
+          </div>
+          <span class="text-xs font-medium text-on-surface">菜谱库</span>
+        </a>
+        <!-- 快速入口-我的 -->
+        <a href="profile.html" id="entry-profile" class="flex flex-col items-center gap-2 min-w-[64px]">
+          <div class="w-14 h-14 rounded-full bg-warning/12 flex items-center justify-center">
+            <i data-lucide="user" class="w-6 h-6 text-warning"></i>
+          </div>
+          <span class="text-xs font-medium text-on-surface">我的</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 今日推荐卡片 -->
+    <section class="px-4 pt-6 pb-2">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-semibold text-on-surface">今日推荐</h3>
+        <button id="btn-refresh-today" class="text-xs text-primary font-medium min-w-[48px] min-h-[48px] flex items-center justify-center">换一批</button>
+      </div>
+      <!-- 今日推荐-红烧排骨 -->
+      <a href="recipe-detail.html?id=1" id="card-today" class="block relative rounded-2xl overflow-hidden shadow-card">
+        <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=500&fit=crop"
+             alt="色泽红亮的红烧排骨盛放在白瓷盘中"
+             data-category="食物"
+             class="w-full h-48 object-cover"/>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+        <div class="absolute bottom-0 left-0 right-0 p-4">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/90 text-on-primary">川菜</span>
+            <span class="inline-flex items-center gap-1 text-[10px] text-white/80">
+              <i data-lucide="clock" class="w-3 h-3"></i>45分钟
+            </span>
+            <span class="inline-flex items-center gap-1 text-[10px] text-white/80">
+              <i data-lucide="flame" class="w-3 h-3"></i>520千卡
+            </span>
+          </div>
+          <h4 class="text-lg font-bold text-white">红烧排骨</h4>
+          <p class="text-xs text-white/70 mt-0.5">肉质酥烂，酱香浓郁，家常经典硬菜</p>
+        </div>
+      </a>
+    </section>
+
+    <!-- 热门菜谱列表（横向滚动） -->
+    <section class="pt-6 pb-2">
+      <div class="flex items-center justify-between px-4 mb-3">
+        <h3 class="text-base font-semibold text-on-surface">热门菜谱</h3>
+        <a href="library.html" id="link-more-hot" class="text-xs text-primary font-medium">查看更多</a>
+      </div>
+      <div class="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none" style="-webkit-overflow-scrolling:touch;">
+
+        <!-- 热门菜谱-1 糖醋里脊 -->
+        <a href="recipe-detail.html?id=2" id="card-hot-1" class="flex-shrink-0 w-36">
+          <div class="rounded-xl overflow-hidden shadow-card bg-surface-container-lowest">
+            <img src="https://images.unsplash.com/photo-1525755662778-989d0524087e?w=400&h=300&fit=crop"
+                 alt="金黄酥脆的糖醋里脊搭配番茄酱汁"
+                 data-category="食物"
+                 class="w-36 h-24 object-cover"/>
+            <div class="p-2.5">
+              <h5 class="text-sm font-semibold text-on-surface truncate">糖醋里脊</h5>
+              <div class="flex items-center justify-between mt-1.5">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-accent-container text-accent">鲁菜</span>
+                <span class="inline-flex items-center gap-0.5 text-on-surface-variant">
+                  <i data-lucide="heart" class="w-3 h-3 text-accent/60"></i>
+                  <span class="text-[10px]">328</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- 热门菜谱-2 清蒸鲈鱼 -->
+        <a href="recipe-detail.html?id=3" id="card-hot-2" class="flex-shrink-0 w-36">
+          <div class="rounded-xl overflow-hidden shadow-card bg-surface-container-lowest">
+            <img src="https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&h=300&fit=crop"
+                 alt="清蒸鲈鱼铺在白色长盘上点缀葱姜丝"
+                 data-category="食物"
+                 class="w-36 h-24 object-cover"/>
+            <div class="p-2.5">
+              <h5 class="text-sm font-semibold text-on-surface truncate">清蒸鲈鱼</h5>
+              <div class="flex items-center justify-between mt-1.5">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-secondary-container text-secondary">粤菜</span>
+                <span class="inline-flex items-center gap-0.5 text-on-surface-variant">
+                  <i data-lucide="heart" class="w-3 h-3 text-accent/60"></i>
+                  <span class="text-[10px]">256</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- 热门菜谱-3 麻婆豆腐 -->
+        <a href="recipe-detail.html?id=4" id="card-hot-3" class="flex-shrink-0 w-36">
+          <div class="rounded-xl overflow-hidden shadow-card bg-surface-container-lowest">
+            <img src="https://images.unsplash.com/photo-1582452919300-81e599f6b1fa?w=400&h=300&fit=crop"
+                 alt="红油麻婆豆腐在铁锅中冒着热气"
+                 data-category="食物"
+                 class="w-36 h-24 object-cover"/>
+            <div class="p-2.5">
+              <h5 class="text-sm font-semibold text-on-surface truncate">麻婆豆腐</h5>
+              <div class="flex items-center justify-between mt-1.5">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-primary-container text-primary">川菜</span>
+                <span class="inline-flex items-center gap-0.5 text-on-surface-variant">
+                  <i data-lucide="heart" class="w-3 h-3 text-accent/60"></i>
+                  <span class="text-[10px]">412</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- 热门菜谱-4 番茄炒蛋 -->
+        <a href="recipe-detail.html?id=5" id="card-hot-4" class="flex-shrink-0 w-36">
+          <div class="rounded-xl overflow-hidden shadow-card bg-surface-container-lowest">
+            <img src="https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=300&fit=crop"
+                 alt="番茄炒蛋盛在青花瓷碗中色泽鲜亮"
+                 data-category="食物"
+                 class="w-36 h-24 object-cover"/>
+            <div class="p-2.5">
+              <h5 class="text-sm font-semibold text-on-surface truncate">番茄炒蛋</h5>
+              <div class="flex items-center justify-between mt-1.5">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-warning/12 text-warning">家常菜</span>
+                <span class="inline-flex items-center gap-0.5 text-on-surface-variant">
+                  <i data-lucide="heart" class="w-3 h-3 text-accent/60"></i>
+                  <span class="text-[10px]">589</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+        <!-- 热门菜谱-5 可乐鸡翅 -->
+        <a href="recipe-detail.html?id=6" id="card-hot-5" class="flex-shrink-0 w-36">
+          <div class="rounded-xl overflow-hidden shadow-card bg-surface-container-lowest">
+            <img src="https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400&h=300&fit=crop"
+                 alt="可乐鸡翅色泽油亮摆放在盘中"
+                 data-category="食物"
+                 class="w-36 h-24 object-cover"/>
+            <div class="p-2.5">
+              <h5 class="text-sm font-semibold text-on-surface truncate">可乐鸡翅</h5>
+              <div class="flex items-center justify-between mt-1.5">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-warning/12 text-warning">家常菜</span>
+                <span class="inline-flex items-center gap-0.5 text-on-surface-variant">
+                  <i data-lucide="heart" class="w-3 h-3 text-accent/60"></i>
+                  <span class="text-[10px]">475</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 最近浏览 -->
+    <section class="px-4 pt-6 pb-8">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-semibold text-on-surface">最近浏览</h3>
+        <button id="btn-clear-recent" class="text-xs text-primary font-medium min-w-[48px] min-h-[48px] flex items-center justify-center">清空</button>
+      </div>
+
+      <!-- 最近浏览-1 宫保鸡丁 -->
+      <a href="recipe-detail.html?id=7" id="recent-1" class="flex items-center gap-3 py-2.5 border-b border-outline-variant/10">
+        <img src="https://images.unsplash.com/photo-1563245372-f21724e3856d?w=200&h=200&fit=crop"
+             alt="宫保鸡丁搭配花生米和干辣椒"
+             data-category="食物"
+             class="w-14 h-14 rounded-lg object-cover flex-shrink-0"/>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-on-surface truncate">宫保鸡丁</p>
+          <p class="text-xs text-on-surface-variant mt-0.5">川菜 · 20分钟前浏览</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/40 flex-shrink-0"></i>
+      </a>
+
+      <!-- 最近浏览-2 蒜蓉西兰花 -->
+      <a href="recipe-detail.html?id=8" id="recent-2" class="flex items-center gap-3 py-2.5 border-b border-outline-variant/10">
+        <img src="https://images.unsplash.com/photo-1603073163308-9654c3fb70b5?w=200&h=200&fit=crop"
+             alt="翠绿的蒜蓉西兰花摆盘精致"
+             data-category="食物"
+             class="w-14 h-14 rounded-lg object-cover flex-shrink-0"/>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-on-surface truncate">蒜蓉西兰花</p>
+          <p class="text-xs text-on-surface-variant mt-0.5">素菜 · 1小时前浏览</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/40 flex-shrink-0"></i>
+      </a>
+
+      <!-- 最近浏览-3 酸辣土豆丝 -->
+      <a href="recipe-detail.html?id=9" id="recent-3" class="flex items-center gap-3 py-2.5 border-b border-outline-variant/10">
+        <img src="https://images.unsplash.com/photo-1596797038530-2c107229654b?w=200&h=200&fit=crop"
+             alt="酸辣土豆丝金黄爽脆配红椒丝"
+             data-category="食物"
+             class="w-14 h-14 rounded-lg object-cover flex-shrink-0"/>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-on-surface truncate">酸辣土豆丝</p>
+          <p class="text-xs text-on-surface-variant mt-0.5">家常菜 · 3小时前浏览</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/40 flex-shrink-0"></i>
+      </a>
+
+      <!-- 最近浏览-4 蛋炒饭 -->
+      <a href="recipe-detail.html?id=10" id="recent-4" class="flex items-center gap-3 py-2.5">
+        <img src="https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop"
+             alt="金黄粒粒分明的蛋炒饭盛在碗中"
+             data-category="食物"
+             class="w-14 h-14 rounded-lg object-cover flex-shrink-0"/>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-on-surface truncate">蛋炒饭</p>
+          <p class="text-xs text-on-surface-variant mt-0.5">家常菜 · 昨天浏览</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-on-surface-variant/40 flex-shrink-0"></i>
+      </a>
+
+    </section>
+
+    <!-- @main-content:end -->
+  </main>
+
+  <script>
+    // 导航辅助函数
+    function navPush(route) {
+      console.log('[原型演示] PUSH 到: ' + route);
+      window.location.href = route;
+    }
+    function navReplace(route) {
+      console.log('[原型演示] REPLACE 为: ' + route);
+      window.location.replace(route);
+    }
+    function navReset(route) {
+      console.log('[原型演示] RESET 到: ' + route);
+      window.location.href = route;
+    }
+    function navBack() {
+      console.log('[原型演示] BACK 返回上一页');
+      if (window.history.length > 1) window.history.back();
+    }
+
+    $(function() {
+      // TabBar 导航
+      $('#nav-home').on('click', function(e) {
+        e.preventDefault();
+        navReset('home.html');
+      });
+      $('#nav-generate').on('click', function(e) {
+        e.preventDefault();
+        navReset('generate.html');
+      });
+      $('#nav-library').on('click', function(e) {
+        e.preventDefault();
+        navReset('library.html');
+      });
+      $('#nav-profile').on('click', function(e) {
+        e.preventDefault();
+        navReset('profile.html');
+      });
+
+      // 今日推荐 - 换一批
+      // 点击后应实现：
+      // 1. 从菜谱数据池中随机选取一道不同的菜谱
+      // 2. 以淡入动画替换卡片中的图片、菜名、标签、时间、卡路里等信息
+      // 3. 记录已展示过的菜谱避免短期内重复
+      $('#btn-refresh-today').on('click', function() {
+        console.log('换一批今日推荐');
+      });
+
+      // 最近浏览 - 清空
+      // 点击后应实现：
+      // 1. 弹出确认弹窗"确定清空最近浏览记录？"
+      // 2. 确认后清空所有最近浏览列表项
+      // 3. 显示空状态提示"暂无浏览记录"
+      $('#btn-clear-recent').on('click', function() {
+        console.log('清空最近浏览');
+      });
+
+      // 通知按钮
+      $('#btn-notification').on('click', function() {
+        console.log('查看通知');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
