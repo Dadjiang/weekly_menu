@@ -19,19 +19,19 @@ interface Recipe {
 }
 
 const MOCK_RECIPES: Recipe[] = [
-  { id: '1', name: '红烧排骨', cuisine: '川菜', time: '45分钟', calories: '520千卡', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=500&fit=crop', likes: 328, description: '肉质酥烂，酱香浓郁' },
-  { id: '2', name: '糖醋里脊', cuisine: '鲁菜', time: '30分钟', calories: '386千卡', image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=400&h=300&fit=crop', likes: 328 },
-  { id: '3', name: '清蒸鲈鱼', cuisine: '粤菜', time: '25分钟', calories: '198千卡', image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=400&h=300&fit=crop', likes: 256 },
-  { id: '4', name: '麻婆豆腐', cuisine: '川菜', time: '20分钟', calories: '275千卡', image: 'https://images.unsplash.com/photo-1582452919300-81e599f6b1fa?w=400&h=300&fit=crop', likes: 412 },
-  { id: '5', name: '番茄炒蛋', cuisine: '家常菜', time: '15分钟', calories: '198千卡', image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=300&fit=crop', likes: 589 },
-  { id: '6', name: '可乐鸡翅', cuisine: '家常菜', time: '35分钟', calories: '420千卡', image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400&h=300&fit=crop', likes: 475 },
+  { id: '1', name: '红烧排骨', cuisine: '川菜', time: '45分钟', calories: '520千卡', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '2', name: '糖醋里脊', cuisine: '鲁菜', time: '30分钟', calories: '386千卡', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '3', name: '清蒸鲈鱼', cuisine: '粤菜', time: '25分钟', calories: '198千卡', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '4', name: '麻婆豆腐', cuisine: '川菜', time: '20分钟', calories: '275千卡', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '5', name: '番茄炒蛋', cuisine: '家常菜', time: '15分钟', calories: '198千卡', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '6', name: '可乐鸡翅', cuisine: '家常菜', time: '35分钟', calories: '420千卡', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
 ]
 
 const MOCK_RECENT = [
-  { id: '7', name: '宫保鸡丁', cuisine: '川菜', time: '20分钟前', image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=200&h=200&fit=crop' },
-  { id: '8', name: '蒜蓉西兰花', cuisine: '素菜', time: '1小时前', image: 'https://images.unsplash.com/photo-1603073163308-9654c3fb70b5?w=200&h=200&fit=crop' },
-  { id: '9', name: '酸辣土豆丝', cuisine: '家常菜', time: '3小时前', image: 'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=200&h=200&fit=crop' },
-  { id: '10', name: '蛋炒饭', cuisine: '家常菜', time: '昨天', image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop' },
+  { id: '7', name: '宫保鸡丁', cuisine: '川菜', time: '20分钟前', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '8', name: '蒜蓉西兰花', cuisine: '素菜', time: '1小时前', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '9', name: '酸辣土豆丝', cuisine: '家常菜', time: '3小时前', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
+  { id: '10', name: '蛋炒饭', cuisine: '家常菜', time: '昨天', image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe', likes: 100 },
 ]
 
 const today = new Date()

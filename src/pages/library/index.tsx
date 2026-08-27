@@ -31,14 +31,14 @@ interface LibraryRecipe {
 }
 
 const MOCK_LIBRARY: LibraryRecipe[] = [
-  { id: '1', name: '宫保鸡丁', category: 'sichuan', cuisine: '川菜', calories: '386 kcal', likes: 256, image: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=400&h=300&fit=crop' },
-  { id: '2', name: '番茄炒蛋', category: 'homestyle', cuisine: '家常菜', calories: '198 kcal', likes: 412, image: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=300&fit=crop' },
-  { id: '3', name: '白灼虾', category: 'cantonese', cuisine: '粤菜', calories: '152 kcal', likes: 189, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop' },
-  { id: '4', name: '麻婆豆腐', category: 'sichuan', cuisine: '川菜', calories: '275 kcal', likes: 334, image: 'https://images.unsplash.com/photo-1582452919602-3ad3d9e4e4b7?w=400&h=300&fit=crop' },
-  { id: '5', name: '皮蛋瘦肉粥', category: 'breakfast', cuisine: '早餐', calories: '210 kcal', likes: 178, image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop' },
-  { id: '6', name: '清炒时蔬', category: 'vegetarian', cuisine: '素食', calories: '85 kcal', likes: 96, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop' },
-  { id: '7', name: '红烧肉', category: 'homestyle', cuisine: '家常菜', calories: '520 kcal', likes: 487, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=500&fit=crop' },
-  { id: '8', name: '烧烤拼盘', category: 'snack', cuisine: '夜宵', calories: '650 kcal', likes: 321, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop' },
+  { id: '1', name: '宫保鸡丁', category: 'sichuan', cuisine: '川菜', calories: '386 kcal', likes: 256, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
+  { id: '2', name: '番茄炒蛋', category: 'homestyle', cuisine: '家常菜', calories: '198 kcal', likes: 412, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
+  { id: '3', name: '白灼虾', category: 'cantonese', cuisine: '粤菜', calories: '152 kcal', likes: 189, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
+  { id: '4', name: '麻婆豆腐', category: 'sichuan', cuisine: '川菜', calories: '275 kcal', likes: 334, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
+  { id: '5', name: '皮蛋瘦肉粥', category: 'breakfast', cuisine: '早餐', calories: '210 kcal', likes: 178, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
+  { id: '6', name: '清炒时蔬', category: 'vegetarian', cuisine: '素食', calories: '85 kcal', likes: 96, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
+  { id: '7', name: '红烧肉', category: 'homestyle', cuisine: '家常菜', calories: '520 kcal', likes: 487, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
+  { id: '8', name: '烧烤拼盘', category: 'snack', cuisine: '夜宵', calories: '650 kcal', likes: 321, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
 ]
 
 const getCuisineColor = (cuisine: string) => {

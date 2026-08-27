@@ -36,7 +36,7 @@ const MOCK_DETAIL: RecipeDetail = {
   time: '15分钟',
   calories: '280kcal',
   difficulty: '简单',
-  image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
+  image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe',
   likes: 128,
   ingredients: [
     { name: '鸡蛋', amount: '3个', initial: '蛋', color: '#C87941', bgColor: 'bg-primary bg-opacity-10' },
