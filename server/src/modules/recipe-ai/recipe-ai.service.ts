@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { getSupabaseClient } from '../../storage/database/supabase-client';
+import { LLMClient, Config } from 'coze-coding-dev-sdk';
 
 @Injectable()
 export class RecipeAiService {
   private get client() {
     return getSupabaseClient();
+  }
+
+  private get llmClient() {
+    const config = new Config();
+    return new LLMClient(config);
   }
 
   async generateRecipe(params: {
@@ -13,9 +19,51 @@ export class RecipeAiService {
     flavor?: string;
     calories?: string;
   }): Promise<any> {
-    // 基于食材和条件生成模拟菜谱（实际项目中可接入 LLM）
     const { ingredients, cuisine = '家常菜', flavor = '清淡' } = params;
 
+    const prompt = `请根据以下食材和条件，生成2-3个菜谱建议。
+
+食材：${ingredients.join('、')}
+菜系：${cuisine}
+口味偏好：${flavor}
+
+要求：
+1. 每个菜谱包含：菜名、简介、预计时间、卡路里、难度、食材清单（含用量）、烹饪步骤（4-6步）
+2. 食材用量要具体（如"2个"、"300克"、"适量"）
+3. 烹饪步骤要详细清晰
+4. 返回JSON格式，字段包括：name, description, time, calories, difficulty, ingredients(数组，每项含name和amount), steps(数组，每项含step和description)
+
+请直接返回JSON数组，不要其他内容。`;
+
+    try {
+      const response = await this.llmClient.invoke(
+        [{ role: 'user', content: prompt }],
+        { model: 'doubao-seed-2-0-mini-260215', temperature: 0.8 }
+      );
+
+      console.log('[AI生成] LLM响应:', response.content);
+
+      // 解析LLM返回的JSON
+      const jsonMatch = response.content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const recipes = JSON.parse(jsonMatch[0]);
+        return recipes.map((recipe: any) => ({
+          ...recipe,
+          cuisine,
+          category: this.mapCuisineToCategory(cuisine),
+          is_ai_generated: true,
+          image: null,
+        }));
+      }
+    } catch (error) {
+      console.log('[AI生成] LLM调用失败，使用模板生成:', error);
+    }
+
+    // 降级：使用模板生成
+    return this.generateWithTemplate(ingredients, cuisine, flavor);
+  }
+
+  private generateWithTemplate(ingredients: string[], cuisine: string, flavor: string) {
     const recipeTemplates = [
       {
         name: `${ingredients[0] || '食材'}炒${ingredients[1] || '时蔬'}`,
@@ -47,16 +95,13 @@ export class RecipeAiService {
       },
     ];
 
-    // 随机选择一个模板
-    const template = recipeTemplates[Math.floor(Math.random() * recipeTemplates.length)];
-
-    return {
-      ...template,
+    return recipeTemplates.map(recipe => ({
+      ...recipe,
       cuisine,
       category: this.mapCuisineToCategory(cuisine),
       is_ai_generated: true,
       image: null,
-    };
+    }));
   }
 
   async generateWeeklyPlan(params: {
@@ -66,11 +111,52 @@ export class RecipeAiService {
     flavors?: string[];
     scenes?: string[];
   }): Promise<any> {
-    const { cuisine = '家常菜' } = params;
+    const { cuisine = '家常菜', caloriesMin = 200, caloriesMax = 600 } = params;
 
+    const prompt = `请生成一周（7天）的三餐菜谱计划。
+
+要求：
+- 菜系偏好：${cuisine}
+- 卡路里范围：${caloriesMin}-${caloriesMax}千卡
+- 每天包含早餐、午餐、晚餐
+- 早餐要简单快捷，午餐要营养均衡，晚餐要清淡易消化
+- 菜品要多样化，不要重复
+
+返回JSON格式，结构如下：
+{
+  "周一": {
+    "breakfast": { "name": "菜名", "calories": "卡路里" },
+    "lunch": { "name": "菜名", "calories": "卡路里" },
+    "dinner": { "name": "菜名", "calories": "卡路里" }
+  },
+  ...
+}
+
+请直接返回JSON对象，不要其他内容。`;
+
+    try {
+      const response = await this.llmClient.invoke(
+        [{ role: 'user', content: prompt }],
+        { model: 'doubao-seed-2-0-mini-260215', temperature: 0.8 }
+      );
+
+      console.log('[AI周计划] LLM响应:', response.content);
+
+      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (error) {
+      console.log('[AI周计划] LLM调用失败，使用模板生成:', error);
+    }
+
+    // 降级：使用模板生成
+    return this.generateWeeklyPlanWithTemplate(cuisine);
+  }
+
+  private generateWeeklyPlanWithTemplate(cuisine: string) {
     const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     const meals = ['breakfast', 'lunch', 'dinner'];
-    const mealNames = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐' };
 
     const recipePool = [
       { name: '小米粥', calories: '180千卡' },
@@ -98,21 +184,11 @@ export class RecipeAiService {
         plan[day][meal] = {
           name: randomRecipe.name,
           calories: randomRecipe.calories,
-          mealType: mealNames[meal as keyof typeof mealNames],
         };
       });
     });
 
-    return {
-      plan,
-      filters: {
-        cuisine,
-        caloriesMin: params.caloriesMin,
-        caloriesMax: params.caloriesMax,
-        flavors: params.flavors,
-        scenes: params.scenes,
-      },
-    };
+    return plan;
   }
 
   private mapCuisineToCategory(cuisine: string): string {
@@ -120,10 +196,20 @@ export class RecipeAiService {
       '川菜': 'sichuan',
       '粤菜': 'cantonese',
       '湘菜': 'hunan',
+      '鲁菜': 'shandong',
+      '苏菜': 'jiangsu',
+      '浙菜': 'zhejiang',
+      '闽菜': 'fujian',
+      '徽菜': 'anhui',
       '家常菜': 'homestyle',
       '西餐': 'western',
       '日料': 'japanese',
+      '韩餐': 'korean',
       '素食': 'vegetarian',
+      '早餐': 'breakfast',
+      '午餐': 'lunch',
+      '晚餐': 'dinner',
+      '夜宵': 'snack',
     };
     return map[cuisine] || 'homestyle';
   }

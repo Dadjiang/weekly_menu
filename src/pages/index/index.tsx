@@ -48,7 +48,7 @@ const IndexPage = () => {
 
   const loadRecipes = useCallback(async () => {
     try {
-      const res = await Network.request({ url: '/api/recipes/hot', method: 'GET' })
+      const res = await Network.request({ url: '/api/recipes/popular', method: 'GET' })
       console.log('[首页] 热门菜谱:', res.data)
     } catch (e) {
       console.log('[首页] 加载热门菜谱失败，使用Mock数据', e)

@@ -72,7 +72,7 @@ const LibraryPage = () => {
   const handleSearch = async (text: string) => {
     setSearchText(text)
     try {
-      const res = await Network.request({ url: `/api/recipes/search?q=${encodeURIComponent(text)}`, method: 'GET' })
+      const res = await Network.request({ url: `/api/recipes?search=${encodeURIComponent(text)}`, method: 'GET' })
       console.log('[菜谱库] 搜索结果:', res.data)
     } catch (e) {
       console.log('[菜谱库] 搜索使用本地过滤', e)
