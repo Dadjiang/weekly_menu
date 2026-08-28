@@ -67,7 +67,7 @@ const GeneratePage = () => {
     setGenerating(true)
     try {
       const res = await Network.request({
-        url: '/api/recipes/generate',
+        url: '/api/recipe-ai/generate',
         method: 'POST',
         data: {
           ingredients,
