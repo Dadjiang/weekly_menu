@@ -218,7 +218,7 @@ const GeneratePage = () => {
           <View className="space-y-3">
             {results.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden">
-                <Image src={recipe.image} className="w-full h-40" mode="aspectFill" />
+                <Image src={recipe.image}  className="w-full h-40" mode="aspectFill" />
                 <CardContent className="p-4">
                   <View className="flex items-center gap-2 mb-2">
                     <Badge className={`text-xs ${getTagColor(recipe.tagType)}`}>

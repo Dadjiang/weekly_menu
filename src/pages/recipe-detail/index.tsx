@@ -119,7 +119,9 @@ const RecipeDetailPage = () => {
   return (
     <ScrollView scrollY className="h-full bg-background">
       {/* 菜谱封面图 */}
-      <Image src={recipe.image} className="w-full h-64" mode="aspectFill" />
+      <Image src={recipe.image}  className="w-full h-64" mode="aspectFill"
+        onError={() => {}}
+      />
 
       {/* 基本信息 */}
       <View className="px-4 pt-4 pb-2">

@@ -164,6 +164,7 @@ const LibraryPage = () => {
                 src={recipe.image}
                 className="w-full h-32"
                 mode="aspectFill"
+                onError={() => {}}
               />
               <View className="p-3">
                 <Text className="block text-sm font-medium text-foreground truncate">{recipe.name}</Text>

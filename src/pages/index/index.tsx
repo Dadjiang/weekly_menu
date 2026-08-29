@@ -116,6 +116,7 @@ const IndexPage = () => {
               src={todayRecipe.image}
               className="w-full h-44"
               mode="aspectFill"
+              onError={() => {}}
             />
             <CardContent className="p-4">
               <View className="flex items-center gap-2 mb-2">
@@ -159,6 +160,7 @@ const IndexPage = () => {
                     src={recipe.image}
                     className="w-full h-24"
                     mode="aspectFill"
+                    onError={() => {}}
                   />
                   <CardContent className="p-2">
                     <Text className="block text-sm font-medium text-foreground truncate">{recipe.name}</Text>
@@ -192,6 +194,7 @@ const IndexPage = () => {
                   src={item.image}
                   className="w-16 h-16 rounded-lg"
                   mode="aspectFill"
+                  onError={() => {}}
                 />
                 <View className="flex-1">
                   <Text className="block text-sm font-medium text-foreground">{item.name}</Text>
