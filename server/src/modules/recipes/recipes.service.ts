@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { getSupabaseClient } from '../../storage/database/supabase-client';
+import { S3Storage } from 'coze-coding-dev-sdk';
 
 export interface Recipe {
   id: string;
@@ -8,6 +9,7 @@ export interface Recipe {
   category: string;
   description: string | null;
   image: string | null;
+  image_key: string | null;
   time: string;
   calories: string;
   difficulty: string;
@@ -18,6 +20,14 @@ export interface Recipe {
   created_at: string;
   updated_at: string | null;
 }
+
+const storage = new S3Storage({
+  endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
+  accessKey: '',
+  secretKey: '',
+  bucketName: process.env.COZE_BUCKET_NAME,
+  region: 'cn-beijing',
+});
 
 @Injectable()
 export class RecipesService {
@@ -61,7 +71,17 @@ export class RecipesService {
 
     const { data, error } = await query;
     if (error) throw new Error(`查询菜谱失败: ${error.message}`);
-    return (data || []) as Recipe[];
+    const recipes = (data || []) as Recipe[];
+    // 为每个菜谱生成图片 URL
+    for (const recipe of recipes) {
+      if (recipe.image_key) {
+        recipe.image = await storage.generatePresignedUrl({
+          key: recipe.image_key,
+          expireTime: 86400 * 7, // 7 days
+        });
+      }
+    }
+    return recipes;
   }
 
   async findById(id: string): Promise<Recipe | null> {
@@ -71,7 +91,15 @@ export class RecipesService {
       .eq('id', id)
       .maybeSingle();
     if (error) throw new Error(`查询菜谱失败: ${error.message}`);
-    return data as Recipe | null;
+    const recipe = data as Recipe | null;
+    // 生成图片 URL
+    if (recipe?.image_key) {
+      recipe.image = await storage.generatePresignedUrl({
+        key: recipe.image_key,
+        expireTime: 86400 * 7, // 7 days
+      });
+    }
+    return recipe;
   }
 
   async create(recipe: Partial<Recipe>): Promise<Recipe> {
