@@ -7,6 +7,13 @@ import { Badge } from '@/components/ui/badge'
 import { Sparkles, CalendarDays, BookOpen, User, Clock, Flame, Heart, ChevronRight } from 'lucide-react'
 import { Network } from '@/network'
 
+// 获取图片完整 URL
+const getImageUrl = (url: string) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `${PROJECT_DOMAIN}${url}`
+}
+
 interface Recipe {
   id: string
   name: string
@@ -113,7 +120,7 @@ const IndexPage = () => {
             onClick={() => navigateTo(`/pages/recipe-detail/index?id=${todayRecipe.id}`)}
           >
             <Image
-              src={todayRecipe.image}
+              src={getImageUrl(todayRecipe.image)}
               className="w-full h-44"
               mode="aspectFill"
               onError={() => {}}
@@ -157,7 +164,7 @@ const IndexPage = () => {
                   onClick={() => navigateTo(`/pages/recipe-detail/index?id=${recipe.id}`)}
                 >
                   <Image
-                    src={recipe.image}
+                    src={getImageUrl(recipe.image)}
                     className="w-full h-24"
                     mode="aspectFill"
                     onError={() => {}}
@@ -191,7 +198,7 @@ const IndexPage = () => {
                 onClick={() => navigateTo(`/pages/recipe-detail/index?id=${item.id}`)}
               >
                 <Image
-                  src={item.image}
+                  src={getImageUrl(item.image)}
                   className="w-16 h-16 rounded-lg"
                   mode="aspectFill"
                   onError={() => {}}

@@ -8,6 +8,13 @@ import { Separator } from '@/components/ui/separator'
 import { Heart, Bookmark, Share2, Clock, Flame, Signal, Pencil, Plus } from 'lucide-react'
 import { Network } from '@/network'
 
+// 获取图片完整 URL
+const getImageUrl = (url: string) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `${PROJECT_DOMAIN}${url}`
+}
+
 interface Ingredient {
   name: string
   amount: string
@@ -119,7 +126,7 @@ const RecipeDetailPage = () => {
   return (
     <ScrollView scrollY className="h-full bg-background">
       {/* 菜谱封面图 */}
-      <Image src={recipe.image}  className="w-full h-64" mode="aspectFill"
+      <Image src={getImageUrl(recipe.image)}  className="w-full h-64" mode="aspectFill"
         onError={() => {}}
       />
 
