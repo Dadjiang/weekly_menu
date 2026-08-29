@@ -40,7 +40,7 @@ const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getD
 
 const IndexPage = () => {
   const [todayRecipe] = useState<Recipe>(MOCK_RECIPES[0])
-  const [hotRecipes] = useState<Recipe[]>(MOCK_RECIPES.slice(1))
+  const [hotRecipes, setHotRecipes] = useState<Recipe[]>(MOCK_RECIPES.slice(1))
 
   useDidShow(() => {
     loadRecipes()
@@ -50,6 +50,10 @@ const IndexPage = () => {
     try {
       const res = await Network.request({ url: '/api/recipes/popular', method: 'GET' })
       console.log('[首页] 热门菜谱:', res.data)
+      const data = res.data?.data
+      if (data && Array.isArray(data)) {
+        setHotRecipes(data)
+      }
     } catch (e) {
       console.log('[首页] 加载热门菜谱失败，使用Mock数据', e)
     }

@@ -77,7 +77,7 @@ const WeeklyPlanPage = () => {
     setGenerating(true)
     try {
       const res = await Network.request({
-        url: '/api/recipes/weekly-plan',
+        url: '/api/recipe-ai/weekly-plan',
         method: 'POST',
         data: {
           cuisine: selectedCuisine,
@@ -89,8 +89,38 @@ const WeeklyPlanPage = () => {
       })
       console.log('[每周菜谱] 生成结果:', res.data)
       const data = res.data?.data
-      if (data?.plan) {
-        setWeeklyPlan(data.plan)
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // 将后端返回的对象格式转换为前端期望的数组格式
+        const mealIcons: Record<string, { icon: typeof Coffee; iconColor: string; iconBg: string }> = {
+          breakfast: { icon: Coffee, iconColor: '#E8A33D', iconBg: 'bg-warning bg-opacity-15' },
+          lunch: { icon: Utensils, iconColor: '#D94B3D', iconBg: 'bg-destructive bg-opacity-15' },
+          dinner: { icon: Moon, iconColor: '#7A8B4B', iconBg: 'bg-secondary bg-opacity-15' },
+        }
+        const mealNames: Record<string, string> = {
+          breakfast: '早餐',
+          lunch: '午餐',
+          dinner: '晚餐',
+        }
+        const plan: DayPlan[] = Object.entries(data).map(([day, meals]) => {
+          const dayMeals = meals as any
+          const mealItems: MealItem[] = Object.entries(dayMeals)
+            .filter(([meal]) => mealIcons[meal])
+            .map(([meal, info]) => {
+              const mealInfo = info as any
+              return {
+                name: mealInfo.name,
+                meal: mealNames[meal] || meal,
+                calories: mealInfo.calories,
+                ...mealIcons[meal],
+              }
+            })
+          const totalCal = mealItems.reduce((sum, m) => {
+            const cal = parseInt(m.calories) || 0
+            return sum + cal
+          }, 0)
+          return { day, totalCalories: `${totalCal} kcal`, meals: mealItems }
+        })
+        setWeeklyPlan(plan)
       }
     } catch (e) {
       console.log('[每周菜谱] 使用Mock数据', e)

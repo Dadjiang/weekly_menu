@@ -70,9 +70,9 @@ const RecipeDetailPage = () => {
     setLikeCount(prev => newLiked ? prev + 1 : prev - 1)
     try {
       await Network.request({
-        url: '/api/recipes/like',
+        url: `/api/recipes/${recipeId}/like`,
         method: 'POST',
-        data: { recipeId, liked: newLiked },
+        data: { userId: 'default-user' },
       })
     } catch (e) {
       console.log('[菜谱详情] 点赞请求失败', e)

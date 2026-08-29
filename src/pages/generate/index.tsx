@@ -78,8 +78,10 @@ const GeneratePage = () => {
       })
       console.log('[智能生成] 结果:', res.data)
       const data = res.data?.data
-      if (data?.recipes) {
+      if (data?.recipes && Array.isArray(data.recipes)) {
         setResults(data.recipes)
+      } else if (data && Array.isArray(data)) {
+        setResults(data)
       }
     } catch (e) {
       console.log('[智能生成] 使用Mock数据', e)

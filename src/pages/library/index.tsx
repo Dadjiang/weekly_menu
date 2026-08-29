@@ -56,7 +56,7 @@ const getCuisineColor = (cuisine: string) => {
 const LibraryPage = () => {
   const [searchText, setSearchText] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [recipes] = useState<LibraryRecipe[]>(MOCK_LIBRARY)
+  const [recipes, setRecipes] = useState<LibraryRecipe[]>(MOCK_LIBRARY)
 
   const filteredRecipes = useMemo(() => {
     let list = recipes
@@ -74,6 +74,10 @@ const LibraryPage = () => {
     try {
       const res = await Network.request({ url: `/api/recipes?search=${encodeURIComponent(text)}`, method: 'GET' })
       console.log('[菜谱库] 搜索结果:', res.data)
+      const data = res.data?.data
+      if (data && Array.isArray(data)) {
+        setRecipes(data)
+      }
     } catch (e) {
       console.log('[菜谱库] 搜索使用本地过滤', e)
     }
