@@ -1,6 +1,6 @@
 import { View, Text, Image, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
-import { useState, useMemo } from 'react'
+import Taro, { useDidShow } from '@tarojs/taro'
+import { useState, useMemo, useCallback } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -30,17 +30,6 @@ interface LibraryRecipe {
   image: string
 }
 
-const MOCK_LIBRARY: LibraryRecipe[] = [
-  { id: '1', name: '宫保鸡丁', category: 'sichuan', cuisine: '川菜', calories: '386 kcal', likes: 256, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-  { id: '2', name: '番茄炒蛋', category: 'homestyle', cuisine: '家常菜', calories: '198 kcal', likes: 412, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-  { id: '3', name: '白灼虾', category: 'cantonese', cuisine: '粤菜', calories: '152 kcal', likes: 189, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-  { id: '4', name: '麻婆豆腐', category: 'sichuan', cuisine: '川菜', calories: '275 kcal', likes: 334, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-  { id: '5', name: '皮蛋瘦肉粥', category: 'breakfast', cuisine: '早餐', calories: '210 kcal', likes: 178, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-  { id: '6', name: '清炒时蔬', category: 'vegetarian', cuisine: '素食', calories: '85 kcal', likes: 96, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-  { id: '7', name: '红烧肉', category: 'homestyle', cuisine: '家常菜', calories: '520 kcal', likes: 487, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-  { id: '8', name: '烧烤拼盘', category: 'snack', cuisine: '夜宵', calories: '650 kcal', likes: 321, image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe' },
-]
-
 const getCuisineColor = (cuisine: string) => {
   switch (cuisine) {
     case '川菜': return 'bg-destructive bg-opacity-90 text-white'
@@ -56,12 +45,38 @@ const getCuisineColor = (cuisine: string) => {
 const LibraryPage = () => {
   const [searchText, setSearchText] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [recipes, setRecipes] = useState<LibraryRecipe[]>(MOCK_LIBRARY)
+  const [recipes, setRecipes] = useState<LibraryRecipe[]>([])
+
+  useDidShow(() => {
+    loadRecipes()
+  })
+
+  const loadRecipes = useCallback(async () => {
+    try {
+      const res = await Network.request({ url: '/api/recipes', method: 'GET' })
+      console.log('[菜谱库] 加载菜谱:', res.data)
+      const data = res.data?.data
+      if (data && Array.isArray(data)) {
+        const mapped = data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          category: r.category || 'homestyle',
+          cuisine: r.cuisine,
+          calories: r.calories,
+          likes: r.likes_count || 0,
+          image: r.image,
+        }))
+        setRecipes(mapped)
+      }
+    } catch (e) {
+      console.log('[菜谱库] 加载菜谱失败', e)
+    }
+  }, [])
 
   const filteredRecipes = useMemo(() => {
     let list = recipes
     if (selectedCategory !== 'all') {
-      list = list.filter(r => r.category === selectedCategory)
+      list = list.filter(r => r.category === selectedCategory || r.cuisine === CATEGORIES.find(c => c.key === selectedCategory)?.label)
     }
     if (searchText.trim()) {
       list = list.filter(r => r.name.includes(searchText.trim()))
@@ -76,10 +91,19 @@ const LibraryPage = () => {
       console.log('[菜谱库] 搜索结果:', res.data)
       const data = res.data?.data
       if (data && Array.isArray(data)) {
-        setRecipes(data)
+        const mapped = data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          category: r.category || 'homestyle',
+          cuisine: r.cuisine,
+          calories: r.calories,
+          likes: r.likes_count || 0,
+          image: r.image,
+        }))
+        setRecipes(mapped)
       }
     } catch (e) {
-      console.log('[菜谱库] 搜索使用本地过滤', e)
+      console.log('[菜谱库] 搜索失败', e)
     }
   }
 
@@ -98,68 +122,76 @@ const LibraryPage = () => {
             />
           </View>
           {searchText && (
-            <View className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => handleSearch('')}>
-              <X size={16} color="#8B7355" />
+            <View className="absolute right-4 top-1/2 -translate-y-1/2" onClick={() => handleSearch('')}>
+              <X size={18} color="#8B7355" />
             </View>
           )}
         </View>
       </View>
 
-      {/* 分类标签 */}
-      <ScrollView scrollX className="flex gap-2 px-4 pb-4 whitespace-nowrap">
-        {CATEGORIES.map((cat) => (
-          <View
-            key={cat.key}
-            className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium ${selectedCategory === cat.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-            onClick={() => setSelectedCategory(cat.key)}
-          >
-            <Text>{cat.label}</Text>
-          </View>
-        ))}
+      {/* 分类标签栏 */}
+      <ScrollView scrollX className="w-full border-b border-outline-variant">
+        <View className="flex gap-2 px-4 pb-3">
+          {CATEGORIES.map((cat) => (
+            <View
+              key={cat.key}
+              className={`flex-shrink-0 px-4 py-2 rounded-full ${
+                selectedCategory === cat.key
+                  ? 'bg-primary text-white'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+              onClick={() => setSelectedCategory(cat.key)}
+            >
+              <Text className="text-sm font-medium">{cat.label}</Text>
+            </View>
+          ))}
+        </View>
       </ScrollView>
 
-      {/* 统计 */}
-      <View className="px-4 pb-3 flex items-center justify-between">
-        <Text className="text-xs text-muted-foreground">共 <Text className="font-semibold text-foreground">{filteredRecipes.length}</Text> 道菜谱</Text>
-      </View>
-
-      {/* 菜谱网格 */}
-      <View className="grid grid-cols-2 gap-3 px-4 pb-24">
-        {filteredRecipes.map((recipe) => (
-          <View
-            key={recipe.id}
-            className="bg-card rounded-xl shadow-card overflow-hidden"
-            onClick={() => Taro.navigateTo({ url: `/pages/recipe-detail/index?id=${recipe.id}` })}
-          >
-            <View className="relative">
-              <Image src={recipe.image} className="w-full h-36" mode="aspectFill" />
-              <Badge className={`absolute top-2 left-2 text-xs ${getCuisineColor(recipe.cuisine)}`}>
-                <Text>{recipe.cuisine}</Text>
-              </Badge>
-            </View>
-            <View className="p-3">
-              <Text className="block text-sm font-semibold text-foreground truncate">{recipe.name}</Text>
-              <View className="flex items-center justify-between mt-2">
-                <View className="flex items-center gap-1 text-muted-foreground">
-                  <Flame size={14} color="#E8A33D" />
-                  <Text className="text-xs">{recipe.calories}</Text>
+      {/* 菜谱网格列表 */}
+      <View className="px-4 pt-4 pb-20">
+        <View className="flex items-center justify-between mb-3">
+          <Text className="block text-sm text-muted-foreground">共 {filteredRecipes.length} 道菜谱</Text>
+        </View>
+        <View className="grid grid-cols-2 gap-3">
+          {filteredRecipes.map((recipe) => (
+            <View
+              key={recipe.id}
+              className="bg-surface-container rounded-xl overflow-hidden"
+              onClick={() => Taro.navigateTo({ url: `/pages/recipe-detail/index?id=${recipe.id}` })}
+            >
+              <Image
+                src={recipe.image}
+                className="w-full h-32"
+                mode="aspectFill"
+              />
+              <View className="p-3">
+                <Text className="block text-sm font-medium text-foreground truncate">{recipe.name}</Text>
+                <View className="flex items-center justify-between mt-2">
+                  <Badge className={`text-xs ${getCuisineColor(recipe.cuisine)}`}>
+                    {recipe.cuisine}
+                  </Badge>
+                  <View className="flex items-center gap-1">
+                    <Flame size={10} color="#8B7355" />
+                    <Text className="text-xs text-muted-foreground">{recipe.calories}</Text>
+                  </View>
                 </View>
-                <View className="flex items-center gap-1 text-muted-foreground">
-                  <Heart size={14} color="#8B7355" />
-                  <Text className="text-xs">{recipe.likes}</Text>
+                <View className="flex items-center gap-1 mt-2">
+                  <Heart size={10} color="#D94B3D" />
+                  <Text className="text-xs text-muted-foreground">{recipe.likes}</Text>
                 </View>
               </View>
             </View>
-          </View>
-        ))}
+          ))}
+        </View>
       </View>
 
-      {/* FAB 创建按钮 */}
+      {/* 创建自定义菜谱按钮 */}
       <View
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-primary shadow-float flex items-center justify-center"
-        onClick={() => Taro.switchTab({ url: '/pages/generate/index' })}
+        className="fixed bottom-20 right-4 w-14 h-14 rounded-full bg-primary flex items-center justify-center shadow-lg"
+        onClick={() => Taro.navigateTo({ url: '/pages/generate/index' })}
       >
-        <Plus size={24} color="#fff" />
+        <Plus size={24} color="#FFFFFF" />
       </View>
     </ScrollView>
   )

@@ -1,6 +1,7 @@
 import { View, Text, ScrollView } from '@tarojs/components'
 
 import { useState } from 'react'
+import Taro from '@tarojs/taro'
 import { Card } from '@/components/ui/card'
 
 import { Button } from '@/components/ui/button'
@@ -27,42 +28,14 @@ interface DayPlan {
   meals: MealItem[]
 }
 
-const MOCK_WEEKLY: DayPlan[] = [
-  {
-    day: '周一', totalCalories: '1050 kcal',
-    meals: [
-      { name: '小米粥 · 煎蛋 · 凉拌黄瓜', meal: '早餐', calories: '350 kcal', icon: Coffee, iconColor: '#E8A33D', iconBg: 'bg-warning bg-opacity-15' },
-      { name: '宫保鸡丁 · 清炒西兰花 · 米饭', meal: '午餐', calories: '450 kcal', icon: Utensils, iconColor: '#D94B3D', iconBg: 'bg-destructive bg-opacity-15' },
-      { name: '番茄蛋花汤 · 麻婆豆腐 · 杂粮饭', meal: '晚餐', calories: '250 kcal', icon: Moon, iconColor: '#7A8B4B', iconBg: 'bg-secondary bg-opacity-15' },
-    ],
-  },
-  {
-    day: '周二', totalCalories: '1100 kcal',
-    meals: [
-      { name: '牛奶燕麦 · 全麦面包 · 水果', meal: '早餐', calories: '380 kcal', icon: Coffee, iconColor: '#E8A33D', iconBg: 'bg-warning bg-opacity-15' },
-      { name: '红烧排骨 · 蒜蓉菠菜 · 米饭', meal: '午餐', calories: '520 kcal', icon: Utensils, iconColor: '#D94B3D', iconBg: 'bg-destructive bg-opacity-15' },
-      { name: '清蒸鲈鱼 · 凉拌木耳 · 小米饭', meal: '晚餐', calories: '200 kcal', icon: Moon, iconColor: '#7A8B4B', iconBg: 'bg-secondary bg-opacity-15' },
-    ],
-  },
-  {
-    day: '周三', totalCalories: '1020 kcal',
-    meals: [
-      { name: '豆浆 · 肉包子 · 水煮蛋', meal: '早餐', calories: '400 kcal', icon: Coffee, iconColor: '#E8A33D', iconBg: 'bg-warning bg-opacity-15' },
-      { name: '糖醋里脊 · 白灼生菜 · 米饭', meal: '午餐', calories: '480 kcal', icon: Utensils, iconColor: '#D94B3D', iconBg: 'bg-destructive bg-opacity-15' },
-      { name: '酸辣土豆丝 · 紫菜蛋汤 · 馒头', meal: '晚餐', calories: '140 kcal', icon: Moon, iconColor: '#7A8B4B', iconBg: 'bg-secondary bg-opacity-15' },
-    ],
-  },
-]
-
 const WeeklyPlanPage = () => {
-  
   const [filterOpen, setFilterOpen] = useState(true)
   const [selectedCuisine, setSelectedCuisine] = useState('全部')
   const [selectedFlavors, setSelectedFlavors] = useState<string[]>([])
   const [selectedScenes, setSelectedScenes] = useState<string[]>([])
   const [calorieMin, setCalorieMin] = useState(200)
   const [calorieMax] = useState(800)
-  const [weeklyPlan, setWeeklyPlan] = useState<DayPlan[]>(MOCK_WEEKLY)
+  const [weeklyPlan, setWeeklyPlan] = useState<DayPlan[]>([])
   const [generating, setGenerating] = useState(false)
 
   const toggleFlavor = (flavor: string) => {
@@ -90,7 +63,6 @@ const WeeklyPlanPage = () => {
       console.log('[每周菜谱] 生成结果:', res.data)
       const data = res.data?.data
       if (data && typeof data === 'object' && !Array.isArray(data)) {
-        // 将后端返回的对象格式转换为前端期望的数组格式
         const mealIcons: Record<string, { icon: typeof Coffee; iconColor: string; iconBg: string }> = {
           breakfast: { icon: Coffee, iconColor: '#E8A33D', iconBg: 'bg-warning bg-opacity-15' },
           lunch: { icon: Utensils, iconColor: '#D94B3D', iconBg: 'bg-destructive bg-opacity-15' },
@@ -123,12 +95,12 @@ const WeeklyPlanPage = () => {
         setWeeklyPlan(plan)
       }
     } catch (e) {
-      console.log('[每周菜谱] 使用Mock数据', e)
+      console.log('[每周菜谱] 生成失败', e)
+      Taro.showToast({ title: '生成失败，请重试', icon: 'none' })
     } finally {
       setGenerating(false)
     }
   }
-
 
   return (
     <ScrollView scrollY className="h-full bg-background">
@@ -148,108 +120,124 @@ const WeeklyPlanPage = () => {
             <View className="mb-4">
               <Text className="block text-xs font-medium text-muted-foreground mb-2">菜系选择</Text>
               <View className="flex flex-wrap gap-2">
-                {CUISINE_TAGS.map((tag) => (
+                {CUISINE_TAGS.map((cuisine) => (
                   <View
-                    key={tag}
-                    className={`px-3 py-2 rounded-full text-xs font-medium ${selectedCuisine === tag ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                    onClick={() => setSelectedCuisine(tag)}
+                    key={cuisine}
+                    className={`px-3 py-1 rounded-full ${
+                      selectedCuisine === cuisine
+                        ? 'bg-primary text-white'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                    onClick={() => setSelectedCuisine(cuisine)}
                   >
-                    <Text>{tag}</Text>
+                    <Text className="text-xs">{cuisine}</Text>
                   </View>
                 ))}
               </View>
             </View>
 
-            {/* 卡路里 */}
+            {/* 口味偏好 */}
             <View className="mb-4">
-              <View className="flex items-center justify-between mb-2">
-                <Text className="text-xs font-medium text-muted-foreground">卡路里范围</Text>
-                <Text className="text-xs font-semibold text-primary">{calorieMin} - {calorieMax} kcal</Text>
-              </View>
-              <View className="flex items-center gap-3">
-                <Text className="text-xs text-muted-foreground">200</Text>
-                <View className="flex-1">
-                  <Slider min={200} max={800} step={50} value={[calorieMin]} onValueChange={(v) => setCalorieMin(v[0])} />
-                </View>
-                <Text className="text-xs text-muted-foreground">800</Text>
+              <Text className="block text-xs font-medium text-muted-foreground mb-2">口味偏好（多选）</Text>
+              <View className="flex flex-wrap gap-2">
+                {FLAVOR_TAGS.map((flavor) => (
+                  <View
+                    key={flavor}
+                    className={`px-3 py-1 rounded-full ${
+                      selectedFlavors.includes(flavor)
+                        ? 'bg-primary text-white'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                    onClick={() => toggleFlavor(flavor)}
+                  >
+                    <Text className="text-xs">{flavor}</Text>
+                  </View>
+                ))}
               </View>
             </View>
 
-            {/* 口味 */}
+            {/* 用餐场景 */}
             <View className="mb-4">
-              <Text className="block text-xs font-medium text-muted-foreground mb-2">口味偏好</Text>
+              <Text className="block text-xs font-medium text-muted-foreground mb-2">用餐场景（多选）</Text>
               <View className="flex flex-wrap gap-2">
-                {FLAVOR_TAGS.map((tag) => (
+                {SCENE_TAGS.map((scene) => (
                   <View
-                    key={tag}
-                    className={`px-3 py-2 rounded-full text-xs font-medium ${selectedFlavors.includes(tag) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                    onClick={() => toggleFlavor(tag)}
+                    key={scene}
+                    className={`px-3 py-1 rounded-full ${
+                      selectedScenes.includes(scene)
+                        ? 'bg-primary text-white'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                    onClick={() => toggleScene(scene)}
                   >
-                    <Text>{tag}</Text>
+                    <Text className="text-xs">{scene}</Text>
                   </View>
                 ))}
               </View>
             </View>
 
-            {/* 场景 */}
-            <View>
-              <Text className="block text-xs font-medium text-muted-foreground mb-2">用餐场景</Text>
-              <View className="flex flex-wrap gap-2">
-                {SCENE_TAGS.map((tag) => (
-                  <View
-                    key={tag}
-                    className={`px-3 py-2 rounded-full text-xs font-medium ${selectedScenes.includes(tag) ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
-                    onClick={() => toggleScene(tag)}
-                  >
-                    <Text>{tag}</Text>
-                  </View>
-                ))}
-              </View>
+            {/* 卡路里范围 */}
+            <View className="mb-2">
+              <Text className="block text-xs font-medium text-muted-foreground mb-2">
+                卡路里范围：<Text className="text-primary">{calorieMin}-{calorieMax} kcal</Text>
+              </Text>
+              <Slider
+                value={[calorieMin]}
+                min={100}
+                max={800}
+                step={50}
+                onValueChange={(v) => setCalorieMin(v[0])}
+              />
             </View>
           </View>
         )}
       </View>
 
       {/* 生成按钮 */}
-      <View className="mx-4 mt-4">
+      <View className="px-4 pt-4 pb-2">
         <Button
-          className="w-full bg-primary text-primary-foreground py-4 rounded-xl text-base font-semibold"
+          className="w-full bg-primary text-white py-3 rounded-xl"
           onClick={handleGenerate}
           disabled={generating}
         >
-          <Sparkles size={20} color="#fff" />
-          <Text className="ml-2">{generating ? '生成中...' : '生成本周菜谱'}</Text>
+          <Sparkles size={18} color="#FFFFFF" className="mr-2" />
+          <Text className="text-sm font-medium">{generating ? '生成中...' : '生成本周菜谱'}</Text>
         </Button>
       </View>
 
-      {/* 7天菜谱 */}
-      <View className="mx-4 mt-6 mb-6 space-y-4">
-        {weeklyPlan.map((dayPlan) => (
-          <Card key={dayPlan.day} className="bg-card rounded-xl shadow-card overflow-hidden">
-            <View className="flex items-center justify-between px-4 py-3 bg-primary bg-opacity-8">
-              <View className="flex items-center gap-2">
-                <CalendarDays size={16} color="#C87941" />
-                <Text className="text-sm font-semibold text-foreground">{dayPlan.day}</Text>
-              </View>
-              <Text className="text-xs text-muted-foreground">共 {dayPlan.totalCalories}</Text>
-            </View>
-            <View className="p-4">
-              {dayPlan.meals.map((meal, idx) => (
-                <View key={idx} className="flex items-center gap-3 py-2">
-                  <View className={`w-9 h-9 rounded-lg ${meal.iconBg} flex items-center justify-center flex-shrink-0`}>
-                    <meal.icon size={18} color={meal.iconColor} />
+      {/* 菜谱展示区 */}
+      {weeklyPlan.length > 0 && (
+        <View className="px-4 pt-4 pb-20">
+          <Text className="block text-base font-bold text-foreground mb-3">本周菜谱</Text>
+          <View className="space-y-3">
+            {weeklyPlan.map((dayPlan) => (
+              <Card key={dayPlan.day} className="p-4">
+                <View className="flex items-center justify-between mb-3">
+                  <View className="flex items-center gap-2">
+                    <CalendarDays size={18} color="#C87941" />
+                    <Text className="text-sm font-semibold text-foreground">{dayPlan.day}</Text>
                   </View>
-                  <View className="flex-1 min-w-0">
-                    <Text className="block text-sm font-medium text-foreground truncate">{meal.name}</Text>
-                    <Text className="block text-xs text-muted-foreground mt-1">{meal.meal}</Text>
-                  </View>
-                  <Text className="text-xs font-semibold text-primary flex-shrink-0">{meal.calories}</Text>
+                  <Text className="text-xs text-muted-foreground">{dayPlan.totalCalories}</Text>
                 </View>
-              ))}
-            </View>
-          </Card>
-        ))}
-      </View>
+                <View className="space-y-2">
+                  {dayPlan.meals.map((meal, idx) => (
+                    <View key={idx} className="flex items-center gap-3">
+                      <View className={`w-8 h-8 rounded-lg ${meal.iconBg} flex items-center justify-center flex-shrink-0`}>
+                        <meal.icon size={16} color={meal.iconColor} />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="block text-xs text-muted-foreground">{meal.meal}</Text>
+                        <Text className="block text-sm text-foreground">{meal.name}</Text>
+                      </View>
+                      <Text className="text-xs text-muted-foreground">{meal.calories}</Text>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            ))}
+          </View>
+        </View>
+      )}
     </ScrollView>
   )
 }

@@ -1,7 +1,7 @@
 import { View, Text, Image, ScrollView } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
-import { useState } from 'react'
-import { Card } from '@/components/ui/card'
+import Taro, { useRouter, useDidShow } from '@tarojs/taro'
+import { useState, useCallback } from 'react'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -11,9 +11,6 @@ import { Network } from '@/network'
 interface Ingredient {
   name: string
   amount: string
-  initial: string
-  color: string
-  bgColor: string
 }
 
 interface RecipeDetail {
@@ -26,43 +23,50 @@ interface RecipeDetail {
   image: string
   likes: number
   ingredients: Ingredient[]
-  steps: { step: number; description: string }[]
-}
-
-const MOCK_DETAIL: RecipeDetail = {
-  id: '1',
-  name: '番茄炒蛋',
-  cuisine: '家常菜',
-  time: '15分钟',
-  calories: '280kcal',
-  difficulty: '简单',
-  image: 'https://placehold.co/400x300/C87941/FFFFFF?text=Recipe',
-  likes: 128,
-  ingredients: [
-    { name: '鸡蛋', amount: '3个', initial: '蛋', color: '#C87941', bgColor: 'bg-primary bg-opacity-10' },
-    { name: '西红柿', amount: '2个', initial: '柿', color: '#D94B3D', bgColor: 'bg-destructive bg-opacity-10' },
-    { name: '葱花', amount: '适量', initial: '葱', color: '#7A8B4B', bgColor: 'bg-secondary bg-opacity-10' },
-    { name: '盐', amount: '适量', initial: '盐', color: '#8B7355', bgColor: 'bg-muted' },
-    { name: '糖', amount: '少许', initial: '糖', color: '#8B7355', bgColor: 'bg-muted' },
-    { name: '油', amount: '适量', initial: '油', color: '#E8A33D', bgColor: 'bg-warning bg-opacity-10' },
-  ],
-  steps: [
-    { step: 1, description: '鸡蛋打散加少许盐搅匀' },
-    { step: 2, description: '西红柿切块备用' },
-    { step: 3, description: '热锅凉油倒入蛋液炒至凝固盛出' },
-    { step: 4, description: '锅中加油放入西红柿翻炒出汁' },
-    { step: 5, description: '加入炒好的鸡蛋翻炒均匀调味出锅' },
-  ],
+  steps: { step: string; description: string }[]
 }
 
 const RecipeDetailPage = () => {
   const router = useRouter()
-  const recipeId = router.params.id || '1'
-  const [recipe] = useState<RecipeDetail>(MOCK_DETAIL)
+  const recipeId = router.params.id || ''
+  const [recipe, setRecipe] = useState<RecipeDetail | null>(null)
   const [liked, setLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(MOCK_DETAIL.likes)
+  const [likeCount, setLikeCount] = useState(0)
   const [favorited, setFavorited] = useState(false)
   const [addedToMy, setAddedToMy] = useState(false)
+
+  useDidShow(() => {
+    if (recipeId) {
+      loadRecipe()
+    }
+  })
+
+  const loadRecipe = useCallback(async () => {
+    try {
+      const res = await Network.request({ url: `/api/recipes/${recipeId}`, method: 'GET' })
+      console.log('[菜谱详情] 加载菜谱:', res.data)
+      const data = res.data?.data
+      if (data) {
+        const mapped: RecipeDetail = {
+          id: data.id,
+          name: data.name,
+          cuisine: data.cuisine,
+          time: data.time,
+          calories: data.calories,
+          difficulty: data.difficulty,
+          image: data.image,
+          likes: data.likes_count || 0,
+          ingredients: data.ingredients || [],
+          steps: data.steps || [],
+        }
+        setRecipe(mapped)
+        setLikeCount(mapped.likes)
+      }
+    } catch (e) {
+      console.log('[菜谱详情] 加载失败', e)
+      Taro.showToast({ title: '加载失败', icon: 'none' })
+    }
+  }, [recipeId])
 
   const handleLike = async () => {
     const newLiked = !liked
@@ -100,111 +104,113 @@ const RecipeDetailPage = () => {
         data: { recipeId },
       })
     } catch (e) {
-      console.log('[菜谱详情] 保存请求失败', e)
+      console.log('[菜谱详情] 保存失败', e)
     }
+  }
+
+  if (!recipe) {
+    return (
+      <View className="h-full bg-background flex items-center justify-center">
+        <Text className="text-muted-foreground">加载中...</Text>
+      </View>
+    )
   }
 
   return (
     <ScrollView scrollY className="h-full bg-background">
-      {/* 封面图 */}
-      <View className="w-full h-64 overflow-hidden">
-        <Image src={recipe.image} className="w-full h-full" mode="aspectFill" />
-      </View>
+      {/* 菜谱封面图 */}
+      <Image src={recipe.image} className="w-full h-64" mode="aspectFill" />
 
       {/* 基本信息 */}
-      <View className="px-4 pt-4 pb-3">
-        <View className="flex items-start justify-between mb-3">
-          <Text className="text-xl font-bold text-foreground flex-1">{recipe.name}</Text>
-          <Badge className="bg-primary bg-opacity-15 text-primary text-xs">
-            <Text>{recipe.cuisine}</Text>
+      <View className="px-4 pt-4 pb-2">
+        <View className="flex items-center gap-2 mb-2">
+          <Badge variant="secondary" className="text-xs">
+            {recipe.cuisine}
           </Badge>
-        </View>
-        <View className="flex items-center gap-4">
-          <View className="flex items-center gap-2">
-            <Clock size={16} color="#8B7355" />
-            <Text className="text-sm text-muted-foreground">{recipe.time}</Text>
+          <View className="flex items-center gap-1">
+            <Clock size={12} color="#8B7355" />
+            <Text className="text-xs text-muted-foreground">{recipe.time}</Text>
           </View>
-          <View className="flex items-center gap-2">
-            <Flame size={16} color="#8B7355" />
-            <Text className="text-sm text-muted-foreground">{recipe.calories}</Text>
+          <View className="flex items-center gap-1">
+            <Flame size={12} color="#D94B3D" />
+            <Text className="text-xs text-muted-foreground">{recipe.calories}</Text>
           </View>
-          <View className="flex items-center gap-2">
-            <Signal size={16} color="#8B7355" />
-            <Text className="text-sm text-muted-foreground">{recipe.difficulty}</Text>
+          <View className="flex items-center gap-1">
+            <Signal size={12} color="#7A8B4B" />
+            <Text className="text-xs text-muted-foreground">{recipe.difficulty}</Text>
           </View>
         </View>
+        <Text className="block text-xl font-bold text-foreground">{recipe.name}</Text>
       </View>
 
       {/* 互动栏 */}
-      <View className="flex items-center gap-6 px-4 py-3 border-t border-outline-variant border-opacity-10">
-        <View className="flex items-center gap-2 min-w-12 min-h-12 justify-center" onClick={handleLike}>
-          <Heart size={20} color={liked ? '#D94B3D' : '#8B7355'} />
-          <Text className={`text-sm ${liked ? 'text-destructive' : 'text-muted-foreground'}`}>{likeCount}</Text>
-        </View>
-        <View className="flex items-center gap-2 min-w-12 min-h-12 justify-center" onClick={handleFavorite}>
-          <Bookmark size={20} color={favorited ? '#C87941' : '#8B7355'} />
-          <Text className={`text-sm ${favorited ? 'text-primary' : 'text-muted-foreground'}`}>{favorited ? '已收藏' : '收藏'}</Text>
-        </View>
-        <View className="flex items-center gap-2 min-w-12 min-h-12 justify-center" onClick={handleShare}>
-          <Share2 size={20} color="#8B7355" />
-          <Text className="text-sm text-muted-foreground">分享</Text>
+      <View className="px-4 pt-3 pb-2">
+        <View className="flex items-center gap-4">
+          <View className="flex items-center gap-1" onClick={handleLike}>
+            <Heart size={20} color={liked ? '#D94B3D' : '#8B7355'} fill={liked ? '#D94B3D' : 'none'} />
+            <Text className="text-sm text-muted-foreground">{likeCount}</Text>
+          </View>
+          <View className="flex items-center gap-1" onClick={handleFavorite}>
+            <Bookmark size={20} color={favorited ? '#C87941' : '#8B7355'} fill={favorited ? '#C87941' : 'none'} />
+            <Text className="text-sm text-muted-foreground">{favorited ? '已收藏' : '收藏'}</Text>
+          </View>
+          <View className="flex items-center gap-1" onClick={handleShare}>
+            <Share2 size={20} color="#8B7355" />
+            <Text className="text-sm text-muted-foreground">分享</Text>
+          </View>
         </View>
       </View>
+
+      <Separator className="my-2" />
 
       {/* 食材清单 */}
-      <View className="px-4 pt-5 pb-2">
-        <Text className="block text-base font-semibold text-foreground mb-3">食材清单</Text>
-        <Card className="bg-card rounded-xl shadow-card overflow-hidden">
-          {recipe.ingredients.map((item, idx) => (
-            <View key={idx}>
-              {idx > 0 && <View className="mx-4"><Separator className="bg-outline-variant bg-opacity-10" /></View>}
-              <View className="flex items-center justify-between px-4 py-3">
-                <View className="flex items-center gap-3">
-                  <View className={`w-8 h-8 ${item.bgColor} rounded-full flex items-center justify-center`}>
-                    <Text className="text-xs font-bold" style={{ color: item.color }}>{item.initial}</Text>
-                  </View>
-                  <Text className="text-sm text-foreground">{item.name}</Text>
-                </View>
-                <Text className="text-sm text-muted-foreground">{item.amount}</Text>
-              </View>
+      <View className="px-4 pt-4 pb-2">
+        <Text className="block text-base font-bold text-foreground mb-3">食材清单</Text>
+        <View className="space-y-2">
+          {recipe.ingredients.map((ing, idx) => (
+            <View key={idx} className="flex items-center justify-between py-2 border-b border-outline-variant">
+              <Text className="text-sm text-foreground">{ing.name}</Text>
+              <Text className="text-sm text-muted-foreground">{ing.amount}</Text>
             </View>
           ))}
-        </Card>
+        </View>
       </View>
 
+      <Separator className="my-2" />
+
       {/* 烹饪步骤 */}
-      <View className="px-4 pt-5 pb-24">
-        <Text className="block text-base font-semibold text-foreground mb-3">烹饪步骤</Text>
-        <View className="space-y-4">
+      <View className="px-4 pt-4 pb-24">
+        <Text className="block text-base font-bold text-foreground mb-3">烹饪步骤</Text>
+        <View className="space-y-3">
           {recipe.steps.map((stepItem, idx) => (
             <View key={idx} className="flex gap-3">
-              <View className="flex-shrink-0 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                <Text>{stepItem.step || idx + 1}</Text>
+              <View className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <Text className="text-xs text-white font-medium">{stepItem.step || idx + 1}</Text>
               </View>
-              <View className="flex-1 pt-1">
-                <Text className="block text-sm text-foreground leading-relaxed">{stepItem.description}</Text>
-              </View>
+              <Text className="block text-sm text-foreground flex-1 pt-1">{stepItem.description}</Text>
             </View>
           ))}
         </View>
       </View>
 
       {/* 底部操作栏 */}
-      <View style={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', flexDirection: 'row', gap: '12px', padding: '12px', backgroundColor: '#FFFFFF', borderTop: '1px solid rgba(43,29,22,0.08)', zIndex: 100 }}>
+      <View
+        className="fixed bottom-0 left-0 right-0 bg-background border-t border-outline-variant px-4 py-3 flex gap-3"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <Button
-          variant="secondary"
-          className="flex-1 bg-muted text-muted-foreground py-4 rounded-xl text-base font-semibold"
+          className="flex-1 bg-muted text-foreground"
           onClick={handleEdit}
         >
-          <Pencil size={18} color="#8B7355" />
-          <Text className="ml-2">修改菜谱</Text>
+          <Pencil size={16} className="mr-1" />
+          <Text className="text-sm">修改菜谱</Text>
         </Button>
         <Button
-          className={`flex-1 py-4 rounded-xl text-base font-semibold ${addedToMy ? 'bg-secondary text-white' : 'bg-primary text-primary-foreground'}`}
+          className={`flex-1 ${addedToMy ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-white'}`}
           onClick={handleAddToMy}
         >
-          <Plus size={18} color="#fff" />
-          <Text className="ml-2">{addedToMy ? '已加入' : '加入我的菜谱'}</Text>
+          <Plus size={16} className="mr-1" />
+          <Text className="text-sm">{addedToMy ? '已加入' : '加入我的菜谱'}</Text>
         </Button>
       </View>
     </ScrollView>
