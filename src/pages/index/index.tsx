@@ -79,25 +79,25 @@ const IndexPage = () => {
       <View className="px-4 pt-4 pb-2">
         <View className="flex justify-around items-center">
           <View className="flex flex-col items-center gap-2" onClick={() => switchTo('/pages/generate/index')}>
-            <View className="w-14 h-14 rounded-full bg-primary bg-opacity-12 flex items-center justify-center">
+            <View className="w-14 h-14 rounded-full  flex items-center justify-center">
               <Sparkles size={24} color="#C87941" />
             </View>
             <Text className="text-xs font-medium text-foreground">智能生成</Text>
           </View>
           <View className="flex flex-col items-center gap-2" onClick={() => navigateTo('/pages/weekly-plan/index')}>
-            <View className="w-14 h-14 rounded-full bg-secondary bg-opacity-12 flex items-center justify-center">
+            <View className="w-14 h-14 rounded-full  flex items-center justify-center">
               <CalendarDays size={24} color="#7A8B4B" />
             </View>
             <Text className="text-xs font-medium text-foreground">每周菜谱</Text>
           </View>
           <View className="flex flex-col items-center gap-2" onClick={() => switchTo('/pages/library/index')}>
-            <View className="w-14 h-14 rounded-full bg-destructive bg-opacity-10 flex items-center justify-center">
+            <View className="w-14 h-14 rounded-full  flex items-center justify-center">
               <BookOpen size={24} color="#D94B3D" />
             </View>
             <Text className="text-xs font-medium text-foreground">菜谱库</Text>
           </View>
           <View className="flex flex-col items-center gap-2" onClick={() => switchTo('/pages/profile/index')}>
-            <View className="w-14 h-14 rounded-full bg-warning bg-opacity-12 flex items-center justify-center">
+            <View className="w-14 h-14 rounded-full  flex items-center justify-center">
               <User size={24} color="#E8A33D" />
             </View>
             <Text className="text-xs font-medium text-foreground">我的</Text>
