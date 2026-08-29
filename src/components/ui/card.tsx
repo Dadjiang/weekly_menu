@@ -79,14 +79,19 @@ CardDescription.displayName = "CardDescription"
 const CardContent = React.forwardRef<
   React.ElementRef<typeof View>,
   React.ComponentPropsWithoutRef<typeof View>
->(({ className, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   const { hasHeader } = React.useContext(CardContext)
+  const childrenArray = React.Children.toArray(children)
   return (
     <View 
       ref={ref} 
       className={cn("p-6", hasHeader && "pt-0", className)} 
       {...props} 
-    />
+    >
+      {childrenArray.map((child, index) => (
+        <React.Fragment key={index}>{child}</React.Fragment>
+      ))}
+    </View>
   )
 })
 CardContent.displayName = "CardContent"
