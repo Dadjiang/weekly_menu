@@ -28,9 +28,7 @@ const Card = React.forwardRef<
         )}
         {...props}
       >
-        {childrenArray.map((child, index) => (
-          <React.Fragment key={index}>{child}</React.Fragment>
-        ))}
+        {children}
       </View>
     </CardContext.Provider>
   )
@@ -81,16 +79,13 @@ const CardContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof View>
 >(({ className, children, ...props }, ref) => {
   const { hasHeader } = React.useContext(CardContext)
-  const childrenArray = React.Children.toArray(children)
   return (
     <View 
       ref={ref} 
       className={cn("p-6", hasHeader && "pt-0", className)} 
       {...props} 
     >
-      {childrenArray.map((child, index) => (
-        <React.Fragment key={index}>{child}</React.Fragment>
-      ))}
+      {children}
     </View>
   )
 })
