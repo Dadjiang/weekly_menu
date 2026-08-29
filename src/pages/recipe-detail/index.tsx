@@ -26,7 +26,7 @@ interface RecipeDetail {
   image: string
   likes: number
   ingredients: Ingredient[]
-  steps: string[]
+  steps: { step: number; description: string }[]
 }
 
 const MOCK_DETAIL: RecipeDetail = {
@@ -47,11 +47,11 @@ const MOCK_DETAIL: RecipeDetail = {
     { name: '油', amount: '适量', initial: '油', color: '#E8A33D', bgColor: 'bg-warning bg-opacity-10' },
   ],
   steps: [
-    '鸡蛋打散加少许盐搅匀',
-    '西红柿切块备用',
-    '热锅凉油倒入蛋液炒至凝固盛出',
-    '锅中加油放入西红柿翻炒出汁',
-    '加入炒好的鸡蛋翻炒均匀调味出锅',
+    { step: 1, description: '鸡蛋打散加少许盐搅匀' },
+    { step: 2, description: '西红柿切块备用' },
+    { step: 3, description: '热锅凉油倒入蛋液炒至凝固盛出' },
+    { step: 4, description: '锅中加油放入西红柿翻炒出汁' },
+    { step: 5, description: '加入炒好的鸡蛋翻炒均匀调味出锅' },
   ],
 }
 
@@ -176,13 +176,13 @@ const RecipeDetailPage = () => {
       <View className="px-4 pt-5 pb-24">
         <Text className="block text-base font-semibold text-foreground mb-3">烹饪步骤</Text>
         <View className="space-y-4">
-          {recipe.steps.map((step, idx) => (
+          {recipe.steps.map((stepItem, idx) => (
             <View key={idx} className="flex gap-3">
               <View className="flex-shrink-0 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold">
-                <Text>{idx + 1}</Text>
+                <Text>{stepItem.step || idx + 1}</Text>
               </View>
               <View className="flex-1 pt-1">
-                <Text className="block text-sm text-foreground leading-relaxed">{step}</Text>
+                <Text className="block text-sm text-foreground leading-relaxed">{stepItem.description}</Text>
               </View>
             </View>
           ))}
