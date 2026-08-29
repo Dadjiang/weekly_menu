@@ -3,7 +3,7 @@ import Taro from '@tarojs/taro'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { BookOpen, Heart, CalendarDays, Share2, Info, ChevronRight, Pencil } from 'lucide-react-taro'
+import { BookOpen, Heart, CalendarDays, Share2, Info, ChevronRight, Pencil } from 'lucide-react'
 
 const ProfilePage = () => {
   const menuItems = [

@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Heart, Bookmark, Share2, Clock, Flame, Signal, Pencil, Plus } from 'lucide-react-taro'
+import { Heart, Bookmark, Share2, Clock, Flame, Signal, Pencil, Plus } from 'lucide-react'
 import { Network } from '@/network'
 
 interface Ingredient {

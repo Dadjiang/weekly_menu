@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 
-import { Search, X, Flame, Heart, Plus } from 'lucide-react-taro'
+import { Search, X, Flame, Heart, Plus } from 'lucide-react'
 import { Network } from '@/network'
 
 const CATEGORIES = [

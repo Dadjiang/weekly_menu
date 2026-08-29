@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Input } from '@/components/ui/input'
-import { Sparkles, Plus, X, Clock, Flame, Signal, Eye, Bookmark, ChefHat } from 'lucide-react-taro'
+import { Sparkles, Plus, X, Clock, Flame, Signal, Eye, Bookmark, ChefHat } from 'lucide-react'
 import { Network } from '@/network'
 
 const COMMON_INGREDIENTS = ['鸡蛋', '西红柿', '猪肉', '豆腐', '青菜', '土豆', '鸡肉', '虾仁', '蘑菇', '玉米']

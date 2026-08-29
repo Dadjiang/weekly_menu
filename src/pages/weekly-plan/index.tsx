@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card'
 
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
-import { Sparkles, SlidersHorizontal, ChevronUp, ChevronDown, CalendarDays, Coffee, Utensils, Moon } from 'lucide-react-taro'
+import { Sparkles, SlidersHorizontal, ChevronUp, ChevronDown, CalendarDays, Coffee, Utensils, Moon } from 'lucide-react'
 import { Network } from '@/network'
 
 const CUISINE_TAGS = ['全部', '川菜', '粤菜', '湘菜', '家常菜', '西餐', '日料']
