@@ -7,11 +7,11 @@ import { BookOpen, Heart, CalendarDays, Share2, Info, ChevronRight, Pencil } fro
 
 const ProfilePage = () => {
   const menuItems = [
-    { icon: BookOpen, color: '#C87941', bgColor: 'bg-primary bg-opacity-10', label: '我的菜谱', onClick: () => Taro.switchTab({ url: '/pages/library/index' }) },
-    { icon: Heart, color: '#D94B3D', bgColor: 'bg-destructive bg-opacity-10', label: '我赞过的', onClick: () => Taro.showToast({ title: '我赞过的', icon: 'none' }) },
-    { icon: CalendarDays, color: '#7A8B4B', bgColor: 'bg-secondary bg-opacity-10', label: '每周菜谱计划', onClick: () => Taro.navigateTo({ url: '/pages/weekly-plan/index' }) },
-    { icon: Share2, color: '#C87941', bgColor: 'bg-primary bg-opacity-10', label: '分享设置', onClick: () => Taro.showToast({ title: '分享设置', icon: 'none' }) },
-    { icon: Info, color: '#8B7355', bgColor: 'bg-muted-foreground bg-opacity-10', label: '关于我们', onClick: () => Taro.showToast({ title: '关于我们', icon: 'none' }) },
+    { icon: BookOpen, color: '#C87941', label: '我的菜谱', onClick: () => Taro.switchTab({ url: '/pages/library/index' }) },
+    { icon: Heart, color: '#D94B3D', label: '我赞过的', onClick: () => Taro.showToast({ title: '我赞过的', icon: 'none' }) },
+    { icon: CalendarDays, color: '#7A8B4B', label: '每周菜谱计划', onClick: () => Taro.navigateTo({ url: '/pages/weekly-plan/index' }) },
+    { icon: Share2, color: '#C87941', label: '分享设置', onClick: () => Taro.showToast({ title: '分享设置', icon: 'none' }) },
+    { icon: Info, color: '#8B7355', label: '关于我们', onClick: () => Taro.showToast({ title: '关于我们', icon: 'none' }) },
   ]
 
   return (
@@ -67,7 +67,7 @@ const ProfilePage = () => {
             <View key={item.label}>
               {index > 0 && <View className="mx-4"><Separator className="bg-outline-variant bg-opacity-10" /></View>}
               <View className="flex items-center px-4 py-4" onClick={item.onClick}>
-                <View className={`w-9 h-9 rounded-lg ${item.bgColor} flex items-center justify-center flex-shrink-0`}>
+                <View className="w-9 h-9 flex items-center justify-center flex-shrink-0">
                   <item.icon size={18} color={item.color} />
                 </View>
                 <Text className="flex-1 text-sm font-medium text-foreground ml-3">{item.label}</Text>
