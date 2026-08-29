@@ -1,17 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { getSupabaseClient } from '../../storage/database/supabase-client';
-import { S3Storage } from 'coze-coding-dev-sdk';
-
-
-function getStorage() {
-  return new S3Storage({
-    endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
-    accessKey: '',
-    secretKey: '',
-    bucketName: process.env.COZE_BUCKET_NAME,
-    region: 'cn-beijing',
-  });
-}
+import { getSignedUrl } from '../../storage/object-storage';
 
 export interface Recipe {
   id: string;
@@ -81,10 +70,7 @@ export class RecipesService {
     for (const recipe of recipes) {
       if (recipe.image_key) {
         try {
-          recipe.image = await getStorage().generatePresignedUrl({
-            key: recipe.image_key,
-            expireTime: 86400 * 7, // 7 days
-          });
+          recipe.image = await getSignedUrl(recipe.image_key);
         } catch (error) {
           console.error(`生成图片 URL 失败 (${recipe.image_key}):`, error);
           // 保持原有的 image_key 作为 fallback
@@ -106,10 +92,7 @@ export class RecipesService {
     // 生成图片 URL
     if (recipe?.image_key) {
       try {
-        recipe.image = await getStorage().generatePresignedUrl({
-          key: recipe.image_key,
-          expireTime: 86400 * 7, // 7 days
-        });
+        recipe.image = await getSignedUrl(recipe.image_key);
       } catch (error) {
         console.error(`生成图片 URL 失败 (${recipe.image_key}):`, error);
         recipe.image = recipe.image_key;
@@ -220,10 +203,7 @@ export class RecipesService {
     for (const recipe of recipeList) {
       if (recipe?.image_key) {
         try {
-          recipe.image = await getStorage().generatePresignedUrl({
-            key: recipe.image_key,
-            expireTime: 86400 * 7, // 7天有效期
-          });
+          recipe.image = await getSignedUrl(recipe.image_key);
         } catch (err) {
           console.error(`生成图片 URL 失败 (${recipe.image_key}):`, err);
           // 生成失败降级，保留原始key
