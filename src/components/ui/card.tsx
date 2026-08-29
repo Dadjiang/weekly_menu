@@ -13,8 +13,7 @@ const Card = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof View>
 >(({ className, children, ...props }, ref) => {
   // 检查子元素中是否有 CardHeader
-  const childrenArray = React.Children.toArray(children)
-  const hasHeader = childrenArray.some(
+  const hasHeader = React.Children.toArray(children).some(
     (child) => React.isValidElement(child) && (child.type as any).displayName === "CardHeader"
   )
 
@@ -77,16 +76,14 @@ CardDescription.displayName = "CardDescription"
 const CardContent = React.forwardRef<
   React.ElementRef<typeof View>,
   React.ComponentPropsWithoutRef<typeof View>
->(({ className, children, ...props }, ref) => {
+>(({ className, ...props }, ref) => {
   const { hasHeader } = React.useContext(CardContext)
   return (
     <View 
       ref={ref} 
       className={cn("p-6", hasHeader && "pt-0", className)} 
       {...props} 
-    >
-      {children}
-    </View>
+    />
   )
 })
 CardContent.displayName = "CardContent"
