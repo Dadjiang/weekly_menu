@@ -1,5 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { getSupabaseClient } from '../../storage/database/supabase-client';
+import { S3Storage } from 'coze-coding-dev-sdk';
+
+
+function getStorage() {
+  return new S3Storage({
+    endpointUrl: process.env.COZE_BUCKET_ENDPOINT_URL,
+    accessKey: '',
+    secretKey: '',
+    bucketName: process.env.COZE_BUCKET_NAME,
+    region: 'cn-beijing',
+  });
+}
 
 export interface Recipe {
   id: string;
@@ -28,27 +40,13 @@ export class RecipesService {
     return getSupabaseClient();
   }
 
-  private resolveImageUrl(imageKey: string, baseUrl?: string): string {
-    const path = `/api/storage/image?key=${encodeURIComponent(imageKey)}`;
-    return baseUrl ? `${baseUrl}${path}` : path;
-  }
-
-  private attachImageUrl(recipe: Recipe, baseUrl?: string): void {
-    if (recipe.image_key) {
-      recipe.image = this.resolveImageUrl(recipe.image_key, baseUrl);
-    }
-  }
-
-  async findAll(
-    params?: {
-      category?: string;
-      cuisine?: string;
-      search?: string;
-      limit?: number;
-      offset?: number;
-    },
-    baseUrl?: string,
-  ): Promise<Recipe[]> {
+  async findAll(params?: {
+    category?: string;
+    cuisine?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Recipe[]> {
     let query = this.client
       .from('recipes')
       .select('*')
@@ -79,14 +77,25 @@ export class RecipesService {
     const { data, error } = await query;
     if (error) throw new Error(`查询菜谱失败: ${error.message}`);
     const recipes = (data || []) as Recipe[];
-    // 为每个菜谱生成图片访问 URL（经存储代理接口 readFile 读取）
+    // 为每个菜谱生成图片 URL
     for (const recipe of recipes) {
-      this.attachImageUrl(recipe, baseUrl);
+      if (recipe.image_key) {
+        try {
+          recipe.image = await getStorage().generatePresignedUrl({
+            key: recipe.image_key,
+            expireTime: 86400 * 7, // 7 days
+          });
+        } catch (error) {
+          console.error(`生成图片 URL 失败 (${recipe.image_key}):`, error);
+          // 保持原有的 image_key 作为 fallback
+          recipe.image = recipe.image_key;
+        }
+      }
     }
     return recipes;
   }
 
-  async findById(id: string, baseUrl?: string): Promise<Recipe | null> {
+  async findById(id: string): Promise<Recipe | null> {
     const { data, error } = await this.client
       .from('recipes')
       .select('*')
@@ -95,8 +104,16 @@ export class RecipesService {
     if (error) throw new Error(`查询菜谱失败: ${error.message}`);
     const recipe = data as Recipe | null;
     // 生成图片 URL
-    if (recipe) {
-      this.attachImageUrl(recipe, baseUrl);
+    if (recipe?.image_key) {
+      try {
+        recipe.image = await getStorage().generatePresignedUrl({
+          key: recipe.image_key,
+          expireTime: 86400 * 7, // 7 days
+        });
+      } catch (error) {
+        console.error(`生成图片 URL 失败 (${recipe.image_key}):`, error);
+        recipe.image = recipe.image_key;
+      }
     }
     return recipe;
   }
@@ -189,7 +206,7 @@ export class RecipesService {
     return !!data;
   }
 
-  async getPopular(limit: number = 5, baseUrl?: string): Promise<Recipe[]> {
+  async getPopular(limit: number = 5): Promise<Recipe[]> {
     const { data, error } = await this.client
       .from('recipes')
       .select('*')
@@ -199,9 +216,20 @@ export class RecipesService {
     if (error) throw new Error(`查询热门菜谱失败: ${error.message}`);
 
     const recipeList = data || [];
-    // 遍历每个item，替换image字段为存储代理接口 URL（内部走 readFile）
+    // 遍历每个item，替换image字段为存储服务预签名url
     for (const recipe of recipeList) {
-      this.attachImageUrl(recipe as Recipe, baseUrl);
+      if (recipe?.image_key) {
+        try {
+          recipe.image = await getStorage().generatePresignedUrl({
+            key: recipe.image_key,
+            expireTime: 86400 * 7, // 7天有效期
+          });
+        } catch (err) {
+          console.error(`生成图片 URL 失败 (${recipe.image_key}):`, err);
+          // 生成失败降级，保留原始key
+          recipe.image = recipe.image_key;
+        }
+      }
     }
 
     return recipeList as Recipe[];

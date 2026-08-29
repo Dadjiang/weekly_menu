@@ -1,18 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 
 @Controller('recipes')
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
-
-  private getBaseUrl(req: Request): string {
-    const forwardedProto = req.headers['x-forwarded-proto'];
-    const proto = Array.isArray(forwardedProto)
-      ? forwardedProto[0]
-      : forwardedProto || req.protocol;
-    return `${proto}://${req.get('host')}`;
-  }
 
   @Get()
   async findAll(
@@ -21,27 +12,20 @@ export class RecipesController {
     @Query('search') search?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
-    @Req() req?: Request,
   ) {
-    const data = await this.recipesService.findAll(
-      {
-        category,
-        cuisine,
-        search,
-        limit: limit ? parseInt(limit) : undefined,
-        offset: offset ? parseInt(offset) : undefined,
-      },
-      req ? this.getBaseUrl(req) : undefined,
-    );
+    const data = await this.recipesService.findAll({
+      category,
+      cuisine,
+      search,
+      limit: limit ? parseInt(limit) : undefined,
+      offset: offset ? parseInt(offset) : undefined,
+    });
     return { code: 200, msg: 'success', data };
   }
 
   @Get('popular')
-  async getPopular(@Query('limit') limit?: string, @Req() req?: Request) {
-    const data = await this.recipesService.getPopular(
-      limit ? parseInt(limit) : 5,
-      req ? this.getBaseUrl(req) : undefined,
-    );
+  async getPopular(@Query('limit') limit?: string) {
+    const data = await this.recipesService.getPopular(limit ? parseInt(limit) : 5);
     return { code: 200, msg: 'success', data };
   }
 
@@ -52,8 +36,8 @@ export class RecipesController {
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string, @Req() req?: Request) {
-    const data = await this.recipesService.findById(id, req ? this.getBaseUrl(req) : undefined);
+  async findById(@Param('id') id: string) {
+    const data = await this.recipesService.findById(id);
     if (!data) {
       return { code: 404, msg: '菜谱不存在', data: null };
     }

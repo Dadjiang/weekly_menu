@@ -8,13 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Search, X, Flame, Heart, Plus } from 'lucide-react'
 import { Network } from '@/network'
 
-// 获取图片完整 URL
-const getImageUrl = (url: string) => {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  return `${PROJECT_DOMAIN}${url}`
-}
-
 const CATEGORIES = [
   { key: 'all', label: '全部' },
   { key: 'breakfast', label: '早餐' },
@@ -168,7 +161,7 @@ const LibraryPage = () => {
               onClick={() => Taro.navigateTo({ url: `/pages/recipe-detail/index?id=${recipe.id}` })}
             >
               <Image
-                src={getImageUrl(recipe.image)}
+                src={recipe.image}
                 className="w-full h-32"
                 mode="aspectFill"
                 onError={() => {}}

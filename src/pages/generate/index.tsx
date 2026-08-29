@@ -9,13 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Sparkles, Plus, X, Clock, Flame, Eye, Bookmark } from 'lucide-react'
 import { Network } from '@/network'
 
-// 获取图片完整 URL
-const getImageUrl = (url: string) => {
-  if (!url) return ''
-  if (url.startsWith('http://') || url.startsWith('https://')) return url
-  return `${PROJECT_DOMAIN}${url}`
-}
-
 const COMMON_INGREDIENTS = ['鸡蛋', '西红柿', '猪肉', '豆腐', '青菜', '土豆', '鸡肉', '虾仁', '蘑菇', '玉米']
 const CUISINE_OPTIONS = ['家常菜', '川菜', '粤菜', '湘菜', '西餐', '日料']
 const TASTE_OPTIONS = ['清淡', '微辣', '辣', '酸甜', '咸鲜']
@@ -225,7 +218,7 @@ const GeneratePage = () => {
           <View className="space-y-3">
             {results.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden">
-                <Image src={getImageUrl(recipe.image)}  className="w-full h-40" mode="aspectFill" />
+                <Image src={recipe.image}  className="w-full h-40" mode="aspectFill" />
                 <CardContent className="p-4">
                   <View className="flex items-center gap-2 mb-2">
                     <Badge className={`text-xs ${getTagColor(recipe.tagType)}`}>
