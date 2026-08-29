@@ -13,7 +13,8 @@ const Card = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof View>
 >(({ className, children, ...props }, ref) => {
   // 检查子元素中是否有 CardHeader
-  const hasHeader = React.Children.toArray(children).some(
+  const childrenArray = React.Children.toArray(children)
+  const hasHeader = childrenArray.some(
     (child) => React.isValidElement(child) && (child.type as any).displayName === "CardHeader"
   )
 
@@ -27,7 +28,9 @@ const Card = React.forwardRef<
         )}
         {...props}
       >
-        {children}
+        {childrenArray.map((child, index) => (
+          <React.Fragment key={index}>{child}</React.Fragment>
+        ))}
       </View>
     </CardContext.Provider>
   )
