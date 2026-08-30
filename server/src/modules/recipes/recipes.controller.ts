@@ -35,6 +35,15 @@ export class RecipesController {
     return { code: 200, msg: 'success', data };
   }
 
+  @Post('save')
+  async save(@Body('recipeId') recipeId?: string, @Body('userId') userId?: string) {
+    if (!recipeId) {
+      return { code: 400, msg: '缺少菜谱ID', data: null };
+    }
+    const data = await this.recipesService.saveRecipe(recipeId, userId || 'default-user');
+    return { code: 200, msg: data.saved ? '已加入我的菜谱' : '已移出我的菜谱', data };
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     const data = await this.recipesService.findById(id);

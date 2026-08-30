@@ -179,6 +179,34 @@ export class RecipesService {
     }
   }
 
+  async saveRecipe(recipeId: string, userId: string = 'default-user'): Promise<{ saved: boolean }> {
+    // 检查是否已保存
+    const { data: existing } = await this.client
+      .from('recipe_saves')
+      .select('id')
+      .eq('recipe_id', recipeId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existing) {
+      // 取消保存
+      const { error } = await this.client
+        .from('recipe_saves')
+        .delete()
+        .eq('recipe_id', recipeId)
+        .eq('user_id', userId);
+      if (error) throw new Error(`取消保存失败: ${error.message}`);
+      return { saved: false };
+    } else {
+      // 保存
+      const { error } = await this.client
+        .from('recipe_saves')
+        .insert({ recipe_id: recipeId, user_id: userId });
+      if (error) throw new Error(`保存菜谱失败: ${error.message}`);
+      return { saved: true };
+    }
+  }
+
   async isLiked(recipeId: string, userId: string = 'anonymous'): Promise<boolean> {
     const { data } = await this.client
       .from('recipe_likes')
