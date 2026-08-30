@@ -1,17 +1,33 @@
 import { View, Text, Image, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Sparkles, Plus, X, Clock, Flame, Eye, Bookmark } from 'lucide-react'
 import { Network } from '@/network'
 
 const COMMON_INGREDIENTS = ['鸡蛋', '西红柿', '猪肉', '豆腐', '青菜', '土豆', '鸡肉', '虾仁', '蘑菇', '玉米']
-const CUISINE_OPTIONS = ['家常菜', '川菜', '粤菜', '湘菜', '西餐', '日料']
-const TASTE_OPTIONS = ['清淡', '微辣', '辣', '酸甜', '咸鲜']
+
+interface DictionaryItem {
+  id: string
+  type: string
+  label: string
+  value: string
+  sort_order: number
+}
+
+// 后端返回 { cuisine: [...], flavor: [...] }，将口味类型归一化
+const TASTE_TYPE_KEYS = ['flavor', 'taste']
 
 interface GeneratedRecipe {
   id: string
@@ -29,11 +45,50 @@ interface GeneratedRecipe {
 const GeneratePage = () => {
   const [ingredients, setIngredients] = useState<string[]>(['鸡蛋', '西红柿', '豆腐'])
   const [inputValue, setInputValue] = useState('')
-  const [selectedCuisine, setSelectedCuisine] = useState('家常菜')
-  const [selectedTaste, setSelectedTaste] = useState('清淡')
+  const [cuisineOptions, setCuisineOptions] = useState<DictionaryItem[]>([])
+  const [tasteOptions, setTasteOptions] = useState<DictionaryItem[]>([])
+  const [selectedCuisine, setSelectedCuisine] = useState('')
+  const [selectedTaste, setSelectedTaste] = useState('')
   const [calorieMax, setCalorieMax] = useState(500)
   const [results, setResults] = useState<GeneratedRecipe[]>([])
   const [generating, setGenerating] = useState(false)
+
+  useEffect(() => {
+    loadDictionaries()
+  }, [])
+
+  const loadDictionaries = async () => {
+    try {
+      const res = await Network.request({ url: '/api/dictionaries', method: 'GET' })
+      console.log('[智能生成] 字典数据:', res.data)
+      const data = res.data?.data
+      if (data) {
+        // 分组结构 { cuisine: [...], flavor: [...] }
+        const cuisines: DictionaryItem[] = Array.isArray(data.cuisine) ? data.cuisine : []
+        const tasteKey = TASTE_TYPE_KEYS.find(key => Array.isArray(data[key]))
+        const tastes: DictionaryItem[] = tasteKey ? data[tasteKey] : []
+        // 选项兼容 label/value 与 name/code 两种字段
+        const normalize = (list: DictionaryItem[]) =>
+          list.map(item => ({
+            ...item,
+            label: item.label || (item as any).name,
+            value: item.value || (item as any).code,
+          }))
+        const cuisineList = normalize(cuisines)
+        const tasteList = normalize(tastes)
+        setCuisineOptions(cuisineList)
+        setTasteOptions(tasteList)
+        if (cuisineList.length > 0) {
+          setSelectedCuisine(cuisineList[0].value)
+        }
+        if (tasteList.length > 0) {
+          setSelectedTaste(tasteList[0].value)
+        }
+      }
+    } catch (e) {
+      console.log('[智能生成] 加载字典数据失败', e)
+    }
+  }
 
   const addIngredient = () => {
     const val = inputValue.trim()
@@ -56,6 +111,10 @@ const GeneratePage = () => {
   const handleGenerate = async () => {
     if (ingredients.length === 0) {
       Taro.showToast({ title: '请至少添加一种食材', icon: 'none' })
+      return
+    }
+    if (!selectedCuisine || !selectedTaste) {
+      Taro.showToast({ title: '请选择菜系和口味', icon: 'none' })
       return
     }
     setGenerating(true)
@@ -91,6 +150,10 @@ const GeneratePage = () => {
       case 'accent': return 'bg-destructive bg-opacity-15 text-destructive'
       default: return 'bg-secondary bg-opacity-15 text-secondary'
     }
+  }
+
+  const getSelectedLabel = (options: DictionaryItem[], value: string) => {
+    return options.find(opt => opt.value === value)?.label || '请选择'
   }
 
   return (
@@ -152,41 +215,41 @@ const GeneratePage = () => {
 
         {/* 菜系选择 */}
         <Text className="block text-xs text-muted-foreground mb-2">菜系</Text>
-        <View className="flex flex-wrap gap-2 mb-4">
-          {CUISINE_OPTIONS.map((cuisine) => (
-            <View
-              key={cuisine}
-              className={`px-3 py-1 rounded-full ${
-                selectedCuisine === cuisine
-                  ? 'bg-primary text-white'
-                  : 'bg-muted text-muted-foreground'
-              }`}
-              onClick={() => setSelectedCuisine(cuisine)}
-            >
-              <Text className="text-xs">{cuisine}</Text>
-            </View>
-          ))}
-        </View>
+        <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
+          <SelectTrigger className="w-full h-10">
+            <SelectValue placeholder="请选择菜系">
+              {getSelectedLabel(cuisineOptions, selectedCuisine)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {cuisineOptions.map((option) => (
+              <SelectItem key={option.id} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* 口味偏好 */}
+        <View className="mt-4" />
         <Text className="block text-xs text-muted-foreground mb-2">口味偏好</Text>
-        <View className="flex flex-wrap gap-2 mb-4">
-          {TASTE_OPTIONS.map((taste) => (
-            <View
-              key={taste}
-              className={`px-3 py-1 rounded-full ${
-                selectedTaste === taste
-                  ? 'bg-primary text-white'
-                  : 'bg-muted text-muted-foreground'
-              }`}
-              onClick={() => setSelectedTaste(taste)}
-            >
-              <Text className="text-xs">{taste}</Text>
-            </View>
-          ))}
-        </View>
+        <Select value={selectedTaste} onValueChange={setSelectedTaste}>
+          <SelectTrigger className="w-full h-10">
+            <SelectValue placeholder="请选择口味">
+              {getSelectedLabel(tasteOptions, selectedTaste)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {tasteOptions.map((option) => (
+              <SelectItem key={option.id} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* 卡路里范围 */}
+        <View className="mt-4" />
         <Text className="block text-xs text-muted-foreground mb-2">
           卡路里上限：<Text className="text-primary font-medium">{calorieMax}千卡</Text>
         </Text>
