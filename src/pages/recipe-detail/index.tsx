@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Heart, Bookmark, Share2, Clock, Flame, Signal, Pencil, Plus, X, Save } from 'lucide-react'
+import { Heart, Bookmark, Share2, Clock, Flame, Signal, Pencil, Plus, X, Save, UtensilsCrossed } from 'lucide-react'
 import { Network } from '@/network'
 
 interface Ingredient {
@@ -22,10 +22,12 @@ interface RecipeDetail {
   id: string
   name: string
   cuisine: string
+  category?: string
+  description?: string
   time: string
   calories: string
   difficulty: string
-  image: string
+  image: string | null
   likes: number
   ingredients: Ingredient[]
   steps: { step: string; description: string }[]
@@ -33,10 +35,59 @@ interface RecipeDetail {
 
 type EditableTextField = 'name' | 'cuisine' | 'time' | 'calories' | 'difficulty'
 
+const DRAFT_STORAGE_PREFIX = 'recipe_draft_'
+
+const mapDraftToDetail = (draft: any): RecipeDetail => ({
+  id: draft.id,
+  name: draft.name || '未命名菜谱',
+  cuisine: draft.cuisine || '家常菜',
+  category: draft.category,
+  description: draft.description || '',
+  time: draft.time || '30分钟',
+  calories: draft.calories || '300千卡',
+  difficulty: draft.difficulty || '简单',
+  image: draft.image || null,
+  likes: 0,
+  ingredients: Array.isArray(draft.ingredients)
+    ? draft.ingredients.map((ing: Ingredient) => ({ name: ing.name, amount: ing.amount }))
+    : [],
+  steps: Array.isArray(draft.steps)
+    ? draft.steps.map((s: { step?: string | number; description: string }, i: number) => ({
+        step: s.step != null ? String(s.step) : String(i + 1),
+        description: s.description,
+      }))
+    : [],
+})
+
+const buildRecipePayload = (form: RecipeDetail) => ({
+  name: form.name.trim(),
+  cuisine: form.cuisine,
+  category: form.category || 'homestyle',
+  description: form.description || '',
+  time: form.time,
+  calories: form.calories,
+  difficulty: form.difficulty,
+  ingredients: form.ingredients.filter(ing => ing.name.trim()),
+  steps: form.steps
+    .filter(s => s.description.trim())
+    .map((s, i) => ({ step: i + 1, description: s.description.trim() })),
+  is_ai_generated: true,
+})
+
 const RecipeDetailPage = () => {
   const router = useRouter()
   const recipeId = router.params.id || ''
-  const [recipe, setRecipe] = useState<RecipeDetail | null>(null)
+  const draftKey = router.params.draft || ''
+  const isDraft = !!draftKey
+  const [recipe, setRecipe] = useState<RecipeDetail | null>(() => {
+    if (!draftKey) return null
+    const draft = Taro.getStorageSync(`${DRAFT_STORAGE_PREFIX}${draftKey}`)
+    if (draft) {
+      Taro.removeStorageSync(`${DRAFT_STORAGE_PREFIX}${draftKey}`)
+      return mapDraftToDetail(draft)
+    }
+    return null
+  })
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
   const [favorited, setFavorited] = useState(false)
@@ -76,12 +127,16 @@ const RecipeDetailPage = () => {
   }, [recipeId])
 
   useDidShow(() => {
-    if (recipeId) {
+    if (!isDraft && recipeId) {
       loadRecipe()
     }
   })
 
   const handleLike = async () => {
+    if (isDraft || !recipeId) {
+      Taro.showToast({ title: '请先保存入库', icon: 'none' })
+      return
+    }
     const newLiked = !liked
     setLiked(newLiked)
     setLikeCount(prev => newLiked ? prev + 1 : prev - 1)
@@ -163,6 +218,39 @@ const RecipeDetailPage = () => {
     })
   }
 
+  const persistRecipe = async (form: RecipeDetail) => {
+    if (!form.name.trim()) {
+      Taro.showToast({ title: '请输入菜谱名称', icon: 'none' })
+      return false
+    }
+    const res = await Network.request({
+      url: '/api/recipes',
+      method: 'POST',
+      data: buildRecipePayload(form),
+    })
+    console.log('[菜谱详情] 入库结果:', res.data)
+    const created = res.data?.data
+    const realId: string = created?.id
+    if (res.data?.code !== 200 || !realId) {
+      Taro.showToast({ title: res.data?.msg || '保存失败', icon: 'none' })
+      return false
+    }
+    // 入库后自动加入我的菜谱
+    try {
+      await Network.request({
+        url: '/api/recipes/save',
+        method: 'POST',
+        data: { recipeId: realId, userId: 'default-user' },
+      })
+    } catch (e) {
+      console.log('[菜谱详情] 自动加入我的菜谱失败', e)
+    }
+    Taro.showToast({ title: '已保存入库', icon: 'success' })
+    // 干净切换为已入库态，后续点赞/收藏等均可用
+    Taro.redirectTo({ url: `/pages/recipe-detail/index?id=${realId}` })
+    return true
+  }
+
   const handleSaveEdit = async () => {
     if (!editForm) return
     if (!editForm.name.trim()) {
@@ -171,6 +259,10 @@ const RecipeDetailPage = () => {
     }
     setSaving(true)
     try {
+      if (isDraft) {
+        await persistRecipe(editForm)
+        return
+      }
       const res = await Network.request({
         url: `/api/recipes/${recipeId}`,
         method: 'PUT',
@@ -203,6 +295,16 @@ const RecipeDetailPage = () => {
   }
 
   const handleAddToMy = async () => {
+    if (isDraft) {
+      if (!recipe) return
+      setSaving(true)
+      try {
+        await persistRecipe(recipe)
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
     setAddedToMy(!addedToMy)
     try {
       await Network.request({
@@ -226,9 +328,13 @@ const RecipeDetailPage = () => {
   return (
     <ScrollView scrollY className="h-full bg-background">
       {/* 菜谱封面图 */}
-      <Image src={recipe.image}  className="w-full h-64" mode="aspectFill"
-        onError={() => {}}
-      />
+      {recipe.image ? (
+        <Image src={recipe.image} className="w-full h-64" mode="aspectFill" onError={() => {}} />
+      ) : (
+        <View className="w-full h-64 bg-muted flex items-center justify-center">
+          <UtensilsCrossed size={56} color="#C8B8A0" />
+        </View>
+      )}
 
       {/* 基本信息 */}
       <View className="px-4 pt-4 pb-2">
@@ -315,11 +421,14 @@ const RecipeDetailPage = () => {
           <Text className="text-sm">修改菜谱</Text>
         </Button>
         <Button
-          className={`flex-1 ${addedToMy ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-white'}`}
+          className={`flex-1 ${!isDraft && addedToMy ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-white'}`}
           onClick={handleAddToMy}
+          disabled={saving}
         >
           <Plus size={16} className="mr-1" />
-          <Text className="text-sm">{addedToMy ? '已加入' : '加入我的菜谱'}</Text>
+          <Text className="text-sm">
+            {isDraft ? (saving ? '保存中...' : '保存入库') : addedToMy ? '已加入' : '加入我的菜谱'}
+          </Text>
         </Button>
       </View>
 
