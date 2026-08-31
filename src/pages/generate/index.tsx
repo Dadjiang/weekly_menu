@@ -155,13 +155,16 @@ const GeneratePage = () => {
     }
     setGenerating(true)
     try {
+      // 字典 value 为英文 code、label 为中文名；生成/入库需使用中文菜系与口味
+      const cuisineLabel = cuisineOptions.find(o => o.value === selectedCuisine)?.label || selectedCuisine
+      const flavorLabel = tasteOptions.find(o => o.value === selectedTaste)?.label || selectedTaste
       const res = await Network.request({
         url: '/api/recipe-ai/generate',
         method: 'POST',
         data: {
           ingredients,
-          cuisine: selectedCuisine,
-          flavor: selectedTaste,
+          cuisine: cuisineLabel,
+          flavor: flavorLabel,
           calories: String(calorieMax),
         },
       })
@@ -173,7 +176,7 @@ const GeneratePage = () => {
           ? data
           : []
       if (rawList.length > 0) {
-        setResults(rawList.map((raw, i) => normalizeRecipe(raw, i, selectedCuisine)))
+        setResults(rawList.map((raw, i) => normalizeRecipe(raw, i, cuisineLabel)))
       } else {
         Taro.showToast({ title: '生成结果为空，请重试', icon: 'none' })
       }
