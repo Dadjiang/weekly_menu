@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Sparkles, Plus, X, Clock, Flame, Eye, Bookmark } from 'lucide-react'
+import { Sparkles, Plus, X, Clock, Flame, Eye, Bookmark, UtensilsCrossed } from 'lucide-react'
 import { Network } from '@/network'
+
+const DRAFT_STORAGE_PREFIX = 'recipe_draft_'
 
 const COMMON_INGREDIENTS = ['鸡蛋', '西红柿', '猪肉', '豆腐', '青菜', '土豆', '鸡肉', '虾仁', '蘑菇', '玉米']
 
@@ -37,9 +39,43 @@ interface GeneratedRecipe {
   time: string
   calories: string
   difficulty: string
+  description?: string
+  cuisine?: string
+  category?: string
   ingredients: { name: string; amount: string }[]
   steps: { step: string; description: string }[]
-  image: string
+  image: string | null
+}
+
+const normalizeRecipe = (raw: any, index: number, fallbackCuisine: string): GeneratedRecipe => {
+  const ingredients: GeneratedRecipe['ingredients'] = Array.isArray(raw?.ingredients)
+    ? raw.ingredients.map((ing: any) => ({
+        name: String(ing?.name ?? '').trim(),
+        amount: String(ing?.amount ?? '').trim(),
+      })).filter((ing: { name: string }) => ing.name)
+    : []
+  const steps: GeneratedRecipe['steps'] = Array.isArray(raw?.steps)
+    ? raw.steps.map((s: any, i: number) => ({
+        step: s?.step != null ? String(s.step) : String(i + 1),
+        description: String(s?.description ?? '').trim(),
+      })).filter((s: { description: string }) => s.description)
+    : []
+  const cuisine = raw?.cuisine || fallbackCuisine
+  return {
+    id: raw?.id || `draft_${Date.now()}_${index}`,
+    name: raw?.name || '未命名菜谱',
+    tag: raw?.difficulty || cuisine,
+    tagType: 'success',
+    time: raw?.time || '30分钟',
+    calories: raw?.calories || '300千卡',
+    difficulty: raw?.difficulty || '简单',
+    description: raw?.description || '',
+    cuisine,
+    category: raw?.category,
+    ingredients,
+    steps,
+    image: raw?.image || null,
+  }
 }
 
 const GeneratePage = () => {
@@ -125,16 +161,21 @@ const GeneratePage = () => {
         data: {
           ingredients,
           cuisine: selectedCuisine,
-          taste: selectedTaste,
-          calorieMax,
+          flavor: selectedTaste,
+          calories: String(calorieMax),
         },
       })
       console.log('[智能生成] 结果:', res.data)
       const data = res.data?.data
-      if (data?.recipes && Array.isArray(data.recipes)) {
-        setResults(data.recipes)
-      } else if (data && Array.isArray(data)) {
-        setResults(data)
+      const rawList: any[] = data?.recipes && Array.isArray(data.recipes)
+        ? data.recipes
+        : Array.isArray(data)
+          ? data
+          : []
+      if (rawList.length > 0) {
+        setResults(rawList.map((raw, i) => normalizeRecipe(raw, i, selectedCuisine)))
+      } else {
+        Taro.showToast({ title: '生成结果为空，请重试', icon: 'none' })
       }
     } catch (e) {
       console.log('[智能生成] 生成失败', e)
@@ -154,6 +195,11 @@ const GeneratePage = () => {
 
   const getSelectedLabel = (options: DictionaryItem[], value: string) => {
     return options.find(opt => opt.value === value)?.label || '请选择'
+  }
+
+  const handleViewDetail = (recipe: GeneratedRecipe) => {
+    Taro.setStorageSync(`${DRAFT_STORAGE_PREFIX}${recipe.id}`, recipe)
+    Taro.navigateTo({ url: `/pages/recipe-detail/index?draft=${recipe.id}` })
   }
 
   return (
@@ -180,9 +226,17 @@ const GeneratePage = () => {
         {ingredients.length > 0 && (
           <View className="flex flex-wrap gap-2 mb-4">
             {ingredients.map((item) => (
-              <View key={item} className="flex items-center gap-1 bg-primary bg-opacity-12 rounded-full px-3 py-1">
+              <View key={item} className="flex items-center gap-1 bg-primary-container rounded-full pl-3 pr-1 py-1">
                 <Text className="text-xs text-primary">{item}</Text>
-                <X size={12} color="#C87941" onClick={() => removeIngredient(item)} />
+                <View
+                  className="flex items-center justify-center w-5 h-5"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeIngredient(item)
+                  }}
+                >
+                  <X size={12} color="#C87941" />
+                </View>
               </View>
             ))}
           </View>
@@ -196,7 +250,7 @@ const GeneratePage = () => {
               key={item}
               className={`px-3 py-1 rounded-full ${
                 ingredients.includes(item)
-                  ? 'bg-primary bg-opacity-12'
+                  ? 'bg-primary-container'
                   : 'bg-muted'
               }`}
               onClick={() => addQuickIngredient(item)}
@@ -281,7 +335,13 @@ const GeneratePage = () => {
           <View className="space-y-3">
             {results.map((recipe) => (
               <Card key={recipe.id} className="overflow-hidden">
-                <Image src={recipe.image}  className="w-full h-40" mode="aspectFill" />
+                {recipe.image ? (
+                  <Image src={recipe.image} className="w-full h-40" mode="aspectFill" onError={() => {}} />
+                ) : (
+                  <View className="w-full h-40 bg-muted flex items-center justify-center">
+                    <UtensilsCrossed size={40} color="#C8B8A0" />
+                  </View>
+                )}
                 <CardContent className="p-4">
                   <View className="flex items-center gap-2 mb-2">
                     <Badge className={`text-xs ${getTagColor(recipe.tagType)}`}>
@@ -307,7 +367,7 @@ const GeneratePage = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => Taro.navigateTo({ url: `/pages/recipe-detail/index?id=${recipe.id}` })}
+                      onClick={() => handleViewDetail(recipe)}
                     >
                       <Eye size={14} className="mr-1" />
                       <Text className="text-xs">查看详情</Text>
