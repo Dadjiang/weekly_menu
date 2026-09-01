@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { getSupabaseClient } from '../../storage/database/supabase-client';
-import { getSignedUrl } from '../../storage/object-storage';
+import { getSignedUrl, deleteFile } from '../../storage/object-storage';
 
 export interface Recipe {
   id: string;
@@ -123,8 +123,51 @@ export class RecipesService {
   }
 
   async delete(id: string): Promise<void> {
+    const { data: recipe } = await this.client
+      .from('recipes')
+      .select('image_key')
+      .eq('id', id)
+      .maybeSingle();
+
     const { error } = await this.client.from('recipes').delete().eq('id', id);
     if (error) throw new Error(`删除菜谱失败: ${error.message}`);
+
+    const imageKey = (recipe as Pick<Recipe, 'image_key'> | null)?.image_key;
+    if (imageKey) {
+      await this.safeDeleteImage(imageKey);
+    }
+  }
+
+  async deleteMany(ids: string[]): Promise<{ deleted: number }> {
+    const { data: rows, error: queryError } = await this.client
+      .from('recipes')
+      .select('id, image_key')
+      .in('id', ids);
+    if (queryError) throw new Error(`查询菜谱失败: ${queryError.message}`);
+
+    const imageKeys = ((rows || []) as Array<Pick<Recipe, 'image_key'>>)
+      .map(r => r.image_key)
+      .filter((key): key is string => !!key);
+
+    const { error, count } = await this.client
+      .from('recipes')
+      .delete({ count: 'exact' })
+      .in('id', ids);
+    if (error) throw new Error(`批量删除菜谱失败: ${error.message}`);
+
+    for (const key of imageKeys) {
+      await this.safeDeleteImage(key);
+    }
+
+    return { deleted: count ?? ids.length };
+  }
+
+  private async safeDeleteImage(imageKey: string): Promise<void> {
+    try {
+      await deleteFile(imageKey);
+    } catch (err) {
+      console.error(`删除菜谱图片失败 (${imageKey}):`, err);
+    }
   }
 
   async toggleLike(recipeId: string, userId: string = 'anonymous'): Promise<{ liked: boolean; likes_count: number }> {
