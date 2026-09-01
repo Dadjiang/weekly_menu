@@ -1,17 +1,32 @@
 import { View, Text, ScrollView } from '@tarojs/components'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { Card } from '@/components/ui/card'
 
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Sparkles, SlidersHorizontal, ChevronUp, ChevronDown, CalendarDays, Coffee, Utensils, Moon } from 'lucide-react'
 import { Network } from '@/network'
 
-const CUISINE_TAGS = ['全部', '川菜', '粤菜', '湘菜', '家常菜', '西餐', '日料']
-const FLAVOR_TAGS = ['辣', '清淡', '酸甜', '咸鲜', '麻辣']
 const SCENE_TAGS = ['早餐', '午餐', '晚餐', '夜宵']
+
+const TASTE_TYPE_KEYS = ['flavor', 'taste']
+
+interface DictionaryItem {
+  id: string
+  type: string
+  label: string
+  value: string
+  sort_order: number
+}
 
 interface MealItem {
   name: string
@@ -30,16 +45,49 @@ interface DayPlan {
 
 const WeeklyPlanPage = () => {
   const [filterOpen, setFilterOpen] = useState(true)
-  const [selectedCuisine, setSelectedCuisine] = useState('全部')
-  const [selectedFlavors, setSelectedFlavors] = useState<string[]>([])
+  const [cuisineOptions, setCuisineOptions] = useState<DictionaryItem[]>([])
+  const [tasteOptions, setTasteOptions] = useState<DictionaryItem[]>([])
+  const [selectedCuisine, setSelectedCuisine] = useState('')
+  const [selectedTaste, setSelectedTaste] = useState('')
   const [selectedScenes, setSelectedScenes] = useState<string[]>([])
   const [calorieMin, setCalorieMin] = useState(200)
   const [calorieMax] = useState(800)
   const [weeklyPlan, setWeeklyPlan] = useState<DayPlan[]>([])
   const [generating, setGenerating] = useState(false)
 
-  const toggleFlavor = (flavor: string) => {
-    setSelectedFlavors(prev => prev.includes(flavor) ? prev.filter(f => f !== flavor) : [...prev, flavor])
+  useEffect(() => {
+    loadDictionaries()
+  }, [])
+
+  const loadDictionaries = async () => {
+    try {
+      const res = await Network.request({ url: '/api/dictionaries', method: 'GET' })
+      console.log('[每周菜谱] 字典数据:', res.data)
+      const data = res.data?.data
+      if (data) {
+        const cuisines: DictionaryItem[] = Array.isArray(data.cuisine) ? data.cuisine : []
+        const tasteKey = TASTE_TYPE_KEYS.find(key => Array.isArray(data[key]))
+        const tastes: DictionaryItem[] = tasteKey ? data[tasteKey] : []
+        const normalize = (list: DictionaryItem[]) =>
+          list.map(item => ({
+            ...item,
+            label: item.label || (item as any).name,
+            value: item.value || (item as any).code,
+          }))
+        const cuisineList = normalize(cuisines)
+        const tasteList = normalize(tastes)
+        setCuisineOptions(cuisineList)
+        setTasteOptions(tasteList)
+        if (cuisineList.length > 0) setSelectedCuisine(cuisineList[0].value)
+        if (tasteList.length > 0) setSelectedTaste(tasteList[0].value)
+      }
+    } catch (e) {
+      console.log('[每周菜谱] 加载字典数据失败', e)
+    }
+  }
+
+  const getSelectedLabel = (options: DictionaryItem[], value: string) => {
+    return options.find(opt => opt.value === value)?.label || '请选择'
   }
 
   const toggleScene = (scene: string) => {
@@ -47,14 +95,17 @@ const WeeklyPlanPage = () => {
   }
 
   const handleGenerate = async () => {
+    // 字典 value 为英文 code、label 为中文名；生成需使用中文菜系与口味
+    const cuisineLabel = cuisineOptions.find(o => o.value === selectedCuisine)?.label || selectedCuisine
+    const flavorLabel = tasteOptions.find(o => o.value === selectedTaste)?.label || selectedTaste
     setGenerating(true)
     try {
       const res = await Network.request({
         url: '/api/recipe-ai/weekly-plan',
         method: 'POST',
         data: {
-          cuisine: selectedCuisine,
-          flavors: selectedFlavors,
+          cuisine: cuisineLabel,
+          flavors: flavorLabel ? [flavorLabel] : [],
           scenes: selectedScenes,
           calorieMin,
           calorieMax,
@@ -119,41 +170,39 @@ const WeeklyPlanPage = () => {
             {/* 菜系 */}
             <View className="mb-4">
               <Text className="block text-xs font-medium text-muted-foreground mb-2">菜系选择</Text>
-              <View className="flex flex-wrap gap-2">
-                {CUISINE_TAGS.map((cuisine) => (
-                  <View
-                    key={cuisine}
-                    className={`px-3 py-1 rounded-full ${
-                      selectedCuisine === cuisine
-                        ? 'bg-primary text-white'
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                    onClick={() => setSelectedCuisine(cuisine)}
-                  >
-                    <Text className="text-xs">{cuisine}</Text>
-                  </View>
-                ))}
-              </View>
+              <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="请选择菜系">
+                    {getSelectedLabel(cuisineOptions, selectedCuisine)}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {cuisineOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </View>
 
             {/* 口味偏好 */}
             <View className="mb-4">
-              <Text className="block text-xs font-medium text-muted-foreground mb-2">口味偏好（多选）</Text>
-              <View className="flex flex-wrap gap-2">
-                {FLAVOR_TAGS.map((flavor) => (
-                  <View
-                    key={flavor}
-                    className={`px-3 py-1 rounded-full ${
-                      selectedFlavors.includes(flavor)
-                        ? 'bg-primary text-white'
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                    onClick={() => toggleFlavor(flavor)}
-                  >
-                    <Text className="text-xs">{flavor}</Text>
-                  </View>
-                ))}
-              </View>
+              <Text className="block text-xs font-medium text-muted-foreground mb-2">口味偏好</Text>
+              <Select value={selectedTaste} onValueChange={setSelectedTaste}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="请选择口味">
+                    {getSelectedLabel(tasteOptions, selectedTaste)}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {tasteOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </View>
 
             {/* 用餐场景 */}

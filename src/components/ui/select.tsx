@@ -127,17 +127,17 @@ const SelectTrigger = React.forwardRef<
       {...props}
       id={context?.triggerId}
       className={cn(
-        "flex w-fit items-center justify-between gap-2 rounded-lg border border-input bg-transparent pr-2 pl-3 text-sm whitespace-nowrap transition-colors outline-none select-none focus:border-ring focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4",
+        "flex w-fit items-center justify-between gap-2 rounded-lg border border-input bg-transparent pr-2 pl-3 text-sm whitespace-nowrap transition-colors outline-none select-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4",
         size === "default" && "h-8 py-2",
         size === "sm" && "h-7 py-1 rounded-[10px]",
         context?.open &&
-          "border-ring ring-2 ring-ring ring-offset-2 ring-offset-background",
+          "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background",
         className
       )}
       hoverClass={
         disabled
           ? undefined
-          : "border-ring ring-2 ring-ring ring-offset-2 ring-offset-background"
+          : "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
       }
       onClick={(e) => {
         if (disabled) return
@@ -147,7 +147,7 @@ const SelectTrigger = React.forwardRef<
       }}
     >
       {children}
-      <ChevronDown className="text-muted-foreground" size={16} color="inherit" />
+      <ChevronDown className="text-muted-foreground" size={16} color="#8B7355" />
     </View>
   )
 })
@@ -328,7 +328,7 @@ const SelectContent = React.forwardRef<
           ref={ref}
           id={contentId.current}
           className={cn(
-            "fixed z-50 min-w-36 overflow-x-hidden overflow-y-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-md",
+            "fixed z-50 min-w-36 overflow-x-hidden overflow-y-auto rounded-lg border border-primary-container bg-card p-1 text-popover-foreground shadow-md",
             className
           )}
           style={contentStyle}
@@ -386,10 +386,12 @@ const SelectItem = React.forwardRef<
     <View
       ref={ref}
       className={cn(
-        "relative flex w-full cursor-default items-center gap-2 rounded-md py-1 pr-8 pl-2 text-sm outline-none select-none transition-colors focus:bg-accent focus:text-accent-foreground",
+        "relative flex w-full cursor-default items-center gap-2 rounded-md py-1 pr-8 pl-2 text-sm outline-none select-none transition-colors",
+        isSelected ? "bg-primary-container text-primary" : "text-foreground",
         disabled && "opacity-50 pointer-events-none",
         className
       )}
+      hoverClass={isSelected ? undefined : "bg-muted"}
       onClick={(e) => {
         onClick?.(e)
         if (disabled) return
@@ -404,7 +406,7 @@ const SelectItem = React.forwardRef<
       </View>
       {isSelected ? (
         <View className="pointer-events-none absolute right-2 flex h-4 w-4 items-center justify-center">
-          <Check size={16} color="inherit" />
+          <Check size={16} color="#C87941" />
         </View>
       ) : null}
     </View>
