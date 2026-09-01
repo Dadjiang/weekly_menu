@@ -44,6 +44,15 @@ export class RecipesController {
     return { code: 200, msg: data.saved ? '已加入我的菜谱' : '已移出我的菜谱', data };
   }
 
+  @Post('batch-delete')
+  async batchDelete(@Body('ids') ids?: string[]) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { code: 400, msg: '缺少菜谱ID', data: null };
+    }
+    const data = await this.recipesService.deleteMany(ids);
+    return { code: 200, msg: '删除成功', data };
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     const data = await this.recipesService.findById(id);
