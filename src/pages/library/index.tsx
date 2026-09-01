@@ -10,14 +10,10 @@ import { Network } from '@/network'
 
 const CATEGORIES = [
   { key: 'all', label: '全部' },
-  { key: 'breakfast', label: '早餐' },
-  { key: 'lunch', label: '午餐' },
-  { key: 'dinner', label: '晚餐' },
-  { key: 'snack', label: '夜宵' },
-  { key: 'sichuan', label: '川菜' },
-  { key: 'cantonese', label: '粤菜' },
-  { key: 'homestyle', label: '家常菜' },
   { key: 'vegetarian', label: '素食' },
+  { key: 'light', label: '轻食' },
+  { key: 'meat', label: '荤菜' },
+  { key: 'snack', label: '小吃' },
 ]
 
 interface LibraryRecipe {
@@ -32,12 +28,10 @@ interface LibraryRecipe {
 
 const getCuisineColor = (cuisine: string) => {
   switch (cuisine) {
-    case '川菜': return 'bg-destructive bg-opacity-90 text-white'
-    case '粤菜': return 'bg-primary bg-opacity-90 text-white'
-    case '家常菜': return 'bg-secondary bg-opacity-90 text-white'
     case '素食': return 'bg-secondary bg-opacity-90 text-white'
-    case '早餐': return 'bg-primary bg-opacity-90 text-white'
-    case '夜宵': return 'bg-warning bg-opacity-90 text-white'
+    case '轻食': return 'bg-primary bg-opacity-90 text-white'
+    case '荤菜': return 'bg-destructive bg-opacity-90 text-white'
+    case '小吃': return 'bg-warning bg-opacity-90 text-white'
     default: return 'bg-primary bg-opacity-90 text-white'
   }
 }
@@ -76,7 +70,7 @@ const LibraryPage = () => {
   const filteredRecipes = useMemo(() => {
     let list = recipes
     if (selectedCategory !== 'all') {
-      list = list.filter(r => r.category === selectedCategory || r.cuisine === CATEGORIES.find(c => c.key === selectedCategory)?.label)
+      list = list.filter(r => r.category === selectedCategory)
     }
     if (searchText.trim()) {
       list = list.filter(r => r.name.includes(searchText.trim()))
