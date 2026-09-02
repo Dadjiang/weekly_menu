@@ -3,6 +3,7 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
@@ -13,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Sparkles, SlidersHorizontal, ChevronUp, ChevronDown, CalendarDays, Coffee, Utensils, Moon } from 'lucide-react'
+import { Sparkles, SlidersHorizontal, ChevronUp, ChevronDown, CalendarDays, Coffee, Utensils, Moon, Plus, X } from 'lucide-react'
 import { Network } from '@/network'
 
 const SCENE_TAGS = ['早餐', '午餐', '晚餐', '夜宵']
@@ -54,6 +55,8 @@ const WeeklyPlanPage = () => {
   const [calorieMax] = useState(800)
   const [weeklyPlan, setWeeklyPlan] = useState<DayPlan[]>([])
   const [generating, setGenerating] = useState(false)
+  const [ingredients, setIngredients] = useState<string[]>([])
+  const [ingredientInput, setIngredientInput] = useState('')
 
   useEffect(() => {
     loadDictionaries()
@@ -97,6 +100,17 @@ const WeeklyPlanPage = () => {
     setSelectedScenes(prev => prev.includes(scene) ? prev.filter(s => s !== scene) : [...prev, scene])
   }
 
+  const addIngredient = () => {
+    if (ingredientInput.trim() && !ingredients.includes(ingredientInput.trim())) {
+      setIngredients(prev => [...prev, ingredientInput.trim()])
+      setIngredientInput('')
+    }
+  }
+
+  const removeIngredient = (ingredient: string) => {
+    setIngredients(prev => prev.filter(i => i !== ingredient))
+  }
+
   const handleGenerate = async () => {
     // 字典 value 为英文 code、label 为中文名；生成需使用中文菜系与口味
     const cuisineLabel = cuisineOptions.find(o => o.value === selectedCuisine)?.label || selectedCuisine
@@ -109,6 +123,7 @@ const WeeklyPlanPage = () => {
         url: '/api/recipe-ai/weekly-plan',
         method: 'POST',
         data: {
+          ingredients: ingredients.length > 0 ? ingredients : undefined,
           cuisine: cuisineLabel,
           flavors: flavorLabels,
           scenes: selectedScenes,
@@ -172,6 +187,35 @@ const WeeklyPlanPage = () => {
 
         {filterOpen && (
           <View className="px-4 pb-4">
+            {/* 食材输入 */}
+            <View className="mb-4">
+              <Text className="block text-xs font-medium text-muted-foreground mb-2">食材（可选，提供食材将优先使用）</Text>
+              <View className="flex gap-2">
+                <View className="flex-1">
+                  <Input
+                    className="w-full h-10 bg-muted rounded-lg px-3 text-sm"
+                    placeholder="输入食材名称"
+                    value={ingredientInput}
+                    onInput={(e) => setIngredientInput(e.detail.value)}
+                    onConfirm={addIngredient}
+                  />
+                </View>
+                <Button size="sm" onClick={addIngredient}>
+                  <Plus size={16} />
+                </Button>
+              </View>
+              {ingredients.length > 0 && (
+                <View className="flex flex-wrap gap-2 mt-2">
+                  {ingredients.map((ingredient) => (
+                    <View key={ingredient} className="flex items-center gap-1 px-2 py-1 bg-primary bg-opacity-10 rounded-full">
+                      <Text className="text-xs text-primary">{ingredient}</Text>
+                      <X size={12} color="#C87941" onClick={() => removeIngredient(ingredient)} />
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
             {/* 菜系 */}
             <View className="mb-4">
               <Text className="block text-xs font-medium text-muted-foreground mb-2">菜系选择</Text>

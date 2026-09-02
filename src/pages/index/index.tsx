@@ -28,8 +28,42 @@ const IndexPage = () => {
   const [recentRecipes, setRecentRecipes] = useState<Recipe[]>([])
 
   useDidShow(() => {
+    loadTodayPlan()
     loadRecipes()
   })
+
+  const loadTodayPlan = useCallback(async () => {
+    try {
+      const res = await Network.request({ url: '/api/weekly-plans/today', method: 'GET' })
+      console.log('[首页] 今日菜谱:', res.data)
+      const data = res.data?.data
+      if (data) {
+        // 有本周菜谱，展示今日菜谱
+        if (data.meals && data.meals.length > 0) {
+          const lunchMeal = data.meals.find((m: any) => m.type === '午餐' || m.meal === 'lunch')
+          if (lunchMeal) {
+            setTodayRecipe({
+              id: lunchMeal.recipeId || 'today',
+              name: lunchMeal.name,
+              cuisine: '本周推荐',
+              time: '30分钟',
+              calories: `${lunchMeal.calories}千卡`,
+              image: '',
+              likes: 0,
+            })
+          }
+        }
+      } else {
+        // 没有本周菜谱，跳转到生成页面
+        Taro.showToast({ title: '请先生成本周菜谱', icon: 'none' })
+        setTimeout(() => {
+          navigateTo('/pages/weekly-plan/index')
+        }, 1500)
+      }
+    } catch (e) {
+      console.log('[首页] 加载今日菜谱失败', e)
+    }
+  }, [])
 
   const loadRecipes = useCallback(async () => {
     try {

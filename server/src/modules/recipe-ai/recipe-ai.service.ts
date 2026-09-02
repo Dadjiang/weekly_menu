@@ -105,18 +105,23 @@ export class RecipeAiService {
   }
 
   async generateWeeklyPlan(params: {
+    ingredients?: string[];
     cuisine?: string;
     caloriesMin?: number;
     caloriesMax?: number;
     flavors?: string[];
     scenes?: string[];
   }): Promise<any> {
-    const { cuisine = '家常菜', caloriesMin = 200, caloriesMax = 600 } = params;
+    const { ingredients, cuisine = '家常菜', caloriesMin = 200, caloriesMax = 600 } = params;
+
+    const ingredientsText = ingredients && ingredients.length > 0
+      ? `\n用户提供的食材：${ingredients.join('、')}\n请优先使用这些食材生成菜谱，如果食材不够生成7天菜谱，请随机补充其他常见食材。`
+      : '';
 
     const prompt = `请生成一周（7天）的三餐菜谱计划。
 
 要求：
-- 菜系偏好：${cuisine}
+- 菜系偏好：${cuisine}${ingredientsText}
 - 卡路里范围：${caloriesMin}-${caloriesMax}千卡
 - 每天包含早餐、午餐、晚餐
 - 早餐要简单快捷，午餐要营养均衡，晚餐要清淡易消化
