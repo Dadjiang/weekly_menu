@@ -207,7 +207,7 @@ const WeeklyPlanPage = () => {
               {ingredients.length > 0 && (
                 <View className="flex flex-wrap gap-2 mt-2">
                   {ingredients.map((ingredient) => (
-                    <View key={ingredient} className="flex items-center gap-1 px-2 py-1 bg-primary bg-opacity-10 rounded-full">
+                    <View key={ingredient} className="flex items-center gap-1 px-2 py-1 bg-primary-container rounded-full">
                       <Text className="text-xs text-primary">{ingredient}</Text>
                       <X size={12} color="#C87941" onClick={() => removeIngredient(ingredient)} />
                     </View>
