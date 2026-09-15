@@ -2,8 +2,8 @@ import { View, Text, ScrollView } from '@tarojs/components'
 
 import { useState, useEffect } from 'react'
 import Taro from '@tarojs/taro'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
@@ -14,7 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Sparkles, SlidersHorizontal, ChevronUp, ChevronDown, CalendarDays, Coffee, Utensils, Moon, Plus, X, Pencil, Trash2, Save, Check } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Sparkles, SlidersHorizontal, ChevronUp, ChevronDown, CalendarDays, Coffee, Utensils, Moon, Plus, X, Pencil, Trash2, Save, Flame } from 'lucide-react'
 import { Network } from '@/network'
 
 const SCENE_TAGS = ['早餐', '午餐', '晚餐', '夜宵']
@@ -40,6 +47,7 @@ interface MealItem {
   name: string
   meal: string
   calories: string
+  recipeId?: string
   icon: typeof Coffee
   iconColor: string
   iconBg: string
@@ -91,6 +99,7 @@ const WeeklyPlanPage = () => {
               name: m.name,
               meal: meta.label,
               calories: m.calories,
+              recipeId: m.recipeId,
               icon: meta.icon,
               iconColor: meta.iconColor,
               iconBg: meta.iconBg,
@@ -292,6 +301,7 @@ const WeeklyPlanPage = () => {
           type: m.meal,
           name: m.name,
           calories: m.calories,
+          recipeId: m.recipeId,
         })),
       }))
       const filters = {
@@ -309,6 +319,21 @@ const WeeklyPlanPage = () => {
       })
       const saved = res.data?.data
       if (saved?.id) {
+        // 回写后端创建的 recipeId，避免重复入库
+        const savedPlan = saved.plan_data
+        if (Array.isArray(savedPlan)) {
+          setWeeklyPlan(prev => prev.map((day, di) => {
+            const savedDay = savedPlan[di]
+            if (!savedDay) return day
+            return {
+              ...day,
+              meals: day.meals.map((m, mi) => ({
+                ...m,
+                recipeId: savedDay.meals?.[mi]?.recipeId || m.recipeId,
+              })),
+            }
+          }))
+        }
         setSavedPlanId(saved.id)
         setPlanDirty(false)
         Taro.showToast({ title: '已入库保存', icon: 'success' })
@@ -342,6 +367,8 @@ const WeeklyPlanPage = () => {
       },
     })
   }
+
+  const cuisineLabel = cuisineOptions.find(o => o.value === selectedCuisine)?.label || '家常菜'
 
   return (
     <ScrollView scrollY className="h-full bg-background">
@@ -498,70 +525,108 @@ const WeeklyPlanPage = () => {
             </View>
           </View>
           {planDirty && (
-            <Text className="block text-xs text-muted-foreground mb-3">菜谱有未保存的修改，点击「入库保存」后首页今日菜谱将同步更新。</Text>
+            <Text className="block text-xs text-muted-foreground mb-3">菜谱有未保存的修改，点击「入库保存」后菜品将写入菜谱库并同步首页今日菜谱。</Text>
           )}
-          <View className="space-y-3">
-            {weeklyPlan.map((dayPlan, dayIdx) => (
-              <Card key={`${dayPlan.day}-${dayIdx}`} className="p-4">
-                <View className="flex items-center justify-between mb-3">
-                  <View className="flex items-center gap-2">
-                    <CalendarDays size={18} color="#C87941" />
-                    <Text className="text-sm font-semibold text-foreground">{dayPlan.day}</Text>
-                  </View>
-                  <View className="flex items-center gap-3">
-                    <Text className="text-xs text-muted-foreground">{dayPlan.totalCalories}</Text>
-                    <Trash2 size={15} color="#B08968" onClick={() => deleteDay(dayIdx)} />
-                  </View>
+
+          {weeklyPlan.map((dayPlan, dayIdx) => (
+            <View key={`${dayPlan.day}-${dayIdx}`} className="mb-5">
+              <View className="flex items-center justify-between mb-2">
+                <View className="flex items-center gap-2">
+                  <CalendarDays size={16} color="#C87941" />
+                  <Text className="text-sm font-semibold text-foreground">{dayPlan.day}</Text>
                 </View>
-                <View className="space-y-2">
-                  {dayPlan.meals.map((meal, mealIdx) => {
-                    const isEditing = editingMeal?.day === dayIdx && editingMeal?.meal === mealIdx
-                    return (
-                      <View key={`${dayIdx}-${mealIdx}`} className="flex items-center gap-3">
-                        <View className={`w-8 h-8 rounded-lg ${meal.iconBg} flex items-center justify-center flex-shrink-0`}>
-                          <meal.icon size={16} color={meal.iconColor} />
+                <View className="flex items-center gap-3">
+                  <Text className="text-xs text-muted-foreground">{dayPlan.totalCalories}</Text>
+                  <Trash2 size={14} color="#B08968" onClick={() => deleteDay(dayIdx)} />
+                </View>
+              </View>
+              <View className="grid grid-cols-2 gap-3">
+                {dayPlan.meals.map((meal, mealIdx) => (
+                  <View
+                    key={`${dayIdx}-${mealIdx}`}
+                    className="relative bg-surface-container rounded-xl overflow-hidden"
+                  >
+                    {/* 封面占位（无图，用餐次图标） */}
+                    <View
+                      className={`w-full h-24 flex items-center justify-center ${meal.iconBg}`}
+                      onClick={() => meal.recipeId && Taro.navigateTo({ url: `/pages/recipe-detail/index?id=${meal.recipeId}` })}
+                    >
+                      <meal.icon size={36} color={meal.iconColor} />
+                    </View>
+                    <View className="p-3">
+                      <Text className="block text-xs text-muted-foreground">{meal.meal}</Text>
+                      <Text className="block text-sm font-medium text-foreground truncate mt-1">{meal.name}</Text>
+                      <View className="flex items-center justify-between mt-2">
+                        <Badge className="text-xs bg-primary bg-opacity-90 text-white">
+                          {cuisineLabel}
+                        </Badge>
+                        <View className="flex items-center gap-1">
+                          <Flame size={10} color="#8B7355" />
+                          <Text className="text-xs text-muted-foreground">{meal.calories}</Text>
                         </View>
-                        {isEditing ? (
-                          <View className="flex-1 flex items-center gap-2">
-                            <View className="flex-1">
-                              <Input
-                                className="w-full h-8 bg-muted rounded-lg px-2 text-sm"
-                                value={editName}
-                                onInput={(e) => setEditName(e.detail.value)}
-                                placeholder="菜名"
-                              />
-                            </View>
-                            <View className="w-20">
-                              <Input
-                                className="w-full h-8 bg-muted rounded-lg px-2 text-xs"
-                                value={editCalories}
-                                onInput={(e) => setEditCalories(e.detail.value)}
-                                placeholder="卡路里"
-                              />
-                            </View>
-                            <Check size={18} color="#7A8B4B" onClick={confirmEdit} />
-                            <X size={16} color="#B08968" onClick={cancelEdit} />
-                          </View>
-                        ) : (
-                          <>
-                            <View className="flex-1">
-                              <Text className="block text-xs text-muted-foreground">{meal.meal}</Text>
-                              <Text className="block text-sm text-foreground">{meal.name}</Text>
-                            </View>
-                            <Text className="text-xs text-muted-foreground">{meal.calories}</Text>
-                            <Pencil size={14} color="#B08968" onClick={() => startEdit(dayIdx, mealIdx)} />
-                            <Trash2 size={14} color="#D94B3D" onClick={() => deleteMeal(dayIdx, mealIdx)} />
-                          </>
-                        )}
                       </View>
-                    )
-                  })}
-                </View>
-              </Card>
-            ))}
-          </View>
+                    </View>
+                    {/* 编辑 / 删除 */}
+                    <View className="absolute top-2 right-2 flex items-center gap-1">
+                      <View
+                        className="w-6 h-6 rounded-full bg-background bg-opacity-80 flex items-center justify-center"
+                        onClick={() => startEdit(dayIdx, mealIdx)}
+                      >
+                        <Pencil size={12} color="#8B7355" />
+                      </View>
+                      <View
+                        className="w-6 h-6 rounded-full bg-background bg-opacity-80 flex items-center justify-center"
+                        onClick={() => deleteMeal(dayIdx, mealIdx)}
+                      >
+                        <Trash2 size={12} color="#D94B3D" />
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))}
         </View>
       )}
+
+      {/* 编辑菜品弹窗 */}
+      <Dialog open={!!editingMeal} onOpenChange={(open) => { if (!open) cancelEdit() }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              <Text className="block text-base font-semibold text-foreground">编辑菜品</Text>
+            </DialogTitle>
+          </DialogHeader>
+          <View className="py-2">
+            <Text className="block text-xs font-medium text-muted-foreground mb-1">菜名</Text>
+            <View className="bg-muted rounded-lg mb-3">
+              <Input
+                className="w-full bg-transparent px-3 py-2 text-sm"
+                value={editName}
+                onInput={(e) => setEditName(e.detail.value)}
+                placeholder="请输入菜名"
+              />
+            </View>
+            <Text className="block text-xs font-medium text-muted-foreground mb-1">卡路里</Text>
+            <View className="bg-muted rounded-lg">
+              <Input
+                className="w-full bg-transparent px-3 py-2 text-sm"
+                value={editCalories}
+                onInput={(e) => setEditCalories(e.detail.value)}
+                placeholder="如 300千卡"
+              />
+            </View>
+          </View>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelEdit}>
+              <Text className="text-sm">取消</Text>
+            </Button>
+            <Button onClick={confirmEdit}>
+              <Text className="text-sm">保存</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ScrollView>
   )
 }
